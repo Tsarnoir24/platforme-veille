@@ -114,7 +114,6 @@ const logs =
   ref<AuditLog[]>([]);
 
 const totalLogs = ref(0);
-const auditCapped = ref(false);
 const firstRow = ref(0);
 const pageSize = ref(20);
 
@@ -1450,7 +1449,6 @@ async function load(page = Math.floor(firstRow.value / pageSize.value)) {
 
     logs.value = auditResult.value.data.items;
     totalLogs.value = auditResult.value.data.total;
-    auditCapped.value = auditResult.value.data.capped;
     firstRow.value = auditResult.value.data.page * pageSize.value;
 
 
@@ -1542,35 +1540,24 @@ onMounted(
 
         <button v-for="
 group in
-              auditGroups
+  auditGroups
           " :key="group.key
             " type="button" class="audit-filter" :class="{
-            active:
-              activeGroup ===
-              group.key,
-          }" @click="selectGroup(group.key)">
+              active:
+                activeGroup ===
+                group.key,
+            }" @click="selectGroup(group.key)">
           {{ group.label }}
         </button>
 
       </nav>
 
 
-      <SectionCard :title="`${totalLogs} opération${totalLogs > 1 ? 's' : ''}${auditCapped ? ' (limite atteinte)' : ''}`
-        " :subtitle="auditCapped ? 'Seules les 500 opérations les plus récentes sont accessibles.' : 'Toutes les actions importantes réalisées dans l’application.'" icon="pi pi-list">
+      <SectionCard :title="`${totalLogs} opération${totalLogs > 1 ? 's' : ''}`"
+        subtitle="Toutes les actions importantes réalisées dans l’application." icon="pi pi-list">
 
-        <DataTable
-          :key="activeGroup"
-          :value="logs"
-          :loading="loading"
-          paginator
-          lazy
-          :first="firstRow"
-          :rows="pageSize"
-          :total-records="totalLogs"
-          :rows-per-page-options="[10, 20, 50]"
-          size="small"
-          @page="changePage"
-        >
+        <DataTable :key="activeGroup" :value="logs" :loading="loading" paginator lazy :first="firstRow" :rows="pageSize"
+          :total-records="totalLogs" :rows-per-page-options="[10, 20, 50]" size="small" @page="changePage">
 
           <template #empty>
             Aucune opération enregistrée dans cette partie.
@@ -1784,7 +1771,7 @@ group in
 
               <div v-for="
 row in
-                    detailRows
+  detailRows
                 " :key="`before-${row.key}`
                   " class="detail-row">
 
@@ -1818,7 +1805,7 @@ row in
 
               <div v-for="
 row in
-                    detailRows
+  detailRows
                 " :key="`after-${row.key}`
                   " class="detail-row">
 
