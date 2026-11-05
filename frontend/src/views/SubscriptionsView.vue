@@ -153,11 +153,51 @@ const subscriptionTypeOptions =
   ]);
 
 
-const channelOptions =
-  optionsFr([
-    'IN_APP',
-    'EMAIL',
-  ]);
+function subscriptionTargetId(sub: any): number | null {
+  switch (sub.subscriptionType) {
+    case 'TOPIC':
+      return sub.topic?.id ?? sub.topicId ?? null;
+    case 'DOMAIN':
+      return sub.domain?.id ?? sub.domainId ?? null;
+    case 'KEYWORD':
+      return sub.keyword?.id ?? sub.keywordId ?? null;
+    default:
+      return sub.source?.id ?? sub.sourceId ?? null;
+  }
+}
+
+const activeChannelsForSelectedTarget = computed<string[]>(() => {
+  if (!form.value.targetId) {
+    return [];
+  }
+  return subscriptions.value
+    .filter(
+      (sub) =>
+        sub.active &&
+        sub.subscriptionType === form.value.subscriptionType &&
+        subscriptionTargetId(sub) === form.value.targetId,
+    )
+    .map((sub) => String(sub.channel));
+});
+
+const channelOptions = computed(() =>
+  optionsFr(['IN_APP', 'EMAIL']).map((opt) => {
+    const alreadyActive = activeChannelsForSelectedTarget.value.includes(
+      opt.value,
+    );
+    return {
+      ...opt,
+      label: alreadyActive ? `${opt.label} (déjà actif)` : opt.label,
+      disabled: alreadyActive,
+    };
+  }),
+);
+
+const isDuplicateSelection = computed(
+  () =>
+    Boolean(form.value.targetId) &&
+    activeChannelsForSelectedTarget.value.includes(form.value.channel),
+);
 
 
 const targetOptions =
@@ -402,6 +442,20 @@ watch(
   },
 );
 
+watch(
+  activeChannelsForSelectedTarget,
+  (activeChannels) => {
+    if (activeChannels.includes(form.value.channel)) {
+      const available = ['IN_APP', 'EMAIL'].find(
+        (ch) => !activeChannels.includes(ch),
+      );
+      if (available) {
+        form.value.channel = available;
+      }
+    }
+  },
+);
+
 
 const searchQuery = ref('');
 
@@ -485,14 +539,14 @@ onMounted(
             <div class="select-host">
               <Select append-to="self" v-model="form.channel
               " :options="channelOptions
-                " option-label="label" option-value="value" placeholder="Sélectionner un mode" class="w-full" />
+                " option-label="label" option-value="value" option-disabled="disabled" placeholder="Sélectionner un mode" class="w-full" />
             </div>
 
           </div>
 
 
           <Button label="S’abonner" :loading="creating
-            " :disabled="!form.targetId
+            " :disabled="!form.targetId || isDuplicateSelection
               " @click="
               subscribe
             ">
@@ -510,6 +564,10 @@ onMounted(
           !targetOptions.length
         " class="empty-options">
           Aucun élément disponible pour ce type d’abonnement.
+        </p>
+
+        <p v-else-if="isDuplicateSelection" class="empty-options">
+          Cet élément est déjà suivi sur tous les modes de notification disponibles (Dans l’application et E-mail).
         </p>
 
       </SectionCard>
