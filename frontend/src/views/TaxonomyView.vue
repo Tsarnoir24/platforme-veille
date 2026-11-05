@@ -1176,8 +1176,7 @@ onMounted(
 
                   <DataTable :value="filteredTopics
                   " :loading="loading
-                    " paginator :rows="10
-                      ">
+                    " paginator :rows="10" :rows-per-page-options="[10, 20, 50]">
 
                   <template #empty>
                     Aucun thème enregistré.
@@ -1294,8 +1293,7 @@ onMounted(
 
                 <DataTable :value="filteredDomains
                   " :loading="loading
-                    " paginator :rows="10
-                      ">
+                    " paginator :rows="10" :rows-per-page-options="[10, 20, 50]">
 
                   <template #empty>
                     Aucun domaine enregistré.
@@ -1518,8 +1516,7 @@ onMounted(
 
                 <DataTable :value="filteredLaboratories
                   " :loading="loading
-                    " paginator :rows="10
-                      ">
+                    " paginator :rows="10" :rows-per-page-options="[10, 20, 50]">
 
                   <template #empty>
                     Aucun laboratoire enregistré.
@@ -1636,8 +1633,7 @@ onMounted(
 
                 <DataTable :value="filteredKeywords
                   " :loading="loading
-                    " paginator :rows="10
-                      ">
+                    " paginator :rows="10" :rows-per-page-options="[10, 20, 50]">
 
                   <template #empty>
                     Aucun mot-clé enregistré.

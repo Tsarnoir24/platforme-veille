@@ -33,7 +33,12 @@ import SourceTypeBadge from '../components/ui/SourceTypeBadge.vue';
 import {
     labelFr,
     optionsFr,
+    registerCategoryLabels,
 } from '../i18n/labels';
+import {
+    getCategories,
+    type WatchCategory,
+} from '../services/taxonomy.service';
 
 import {
     getHealth,
@@ -57,6 +62,7 @@ import {
 
 import {
     defaultSourceQuery,
+    registerCategoryQueries,
     simpleSourceQuery,
 } from '../utils/source-targeting';
 
@@ -140,14 +146,22 @@ const CROSSREF_API_URL =
     'https://api.crossref.org';
 
 
-const categoryOptions = [
-    'SCIENTIFIQUE',
-    'REGLEMENTAIRE',
-    'ACCREDITATION',
-    'NORMATIF',
-    'ENVIRONNEMENT',
-    'AUTRE',
-];
+const dynamicCategories = ref<WatchCategory[]>([]);
+
+const categoryOptions = computed(() => {
+    const activeDynamic = dynamicCategories.value.filter((c) => c.active);
+    if (activeDynamic.length > 0) {
+        return activeDynamic.map((c) => c.code);
+    }
+    return [
+        'SCIENTIFIQUE',
+        'REGLEMENTAIRE',
+        'ACCREDITATION',
+        'NORMATIF',
+        'ENVIRONNEMENT',
+        'AUTRE',
+    ];
+});
 
 
 const editForm =
@@ -331,10 +345,12 @@ async function load() {
         const [
             healthResponse,
             sourcesResponse,
+            categoriesResponse,
         ] =
             await Promise.all([
                 getHealth(),
                 getSources(),
+                getCategories().catch(() => ({ data: [] as WatchCategory[] })),
             ]);
 
         health.value =
@@ -342,6 +358,11 @@ async function load() {
 
         sources.value =
             sourcesResponse.data;
+
+        dynamicCategories.value =
+            categoriesResponse.data ?? [];
+        registerCategoryLabels(dynamicCategories.value);
+        registerCategoryQueries(dynamicCategories.value);
     } catch {
         error.value =
             'Impossible de charger les sources.';
@@ -926,7 +947,7 @@ onMounted(
 
                 <DataTable :value="filteredRows
                     " :loading="loading
-                        " data-key="id" sort-mode="single">
+                        " data-key="id" sort-mode="single" paginator :rows="10" :rows-per-page-options="[10, 20, 50]">
 
                     <template #empty>
                         Aucune source ne correspond à la recherche.

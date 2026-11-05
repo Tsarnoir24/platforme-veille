@@ -89,7 +89,7 @@ La plateforme comprend notamment :
 - gestion des éléments de veille ;
 - qualification ;
 - validation, rejet, publication et archivage ;
-- taxonomie ;
+- taxonomie complète (thèmes, domaines, catégories de veille dynamiques avec code technique auto-généré et sujets à surveiller par défaut, laboratoires et mots-clés) ;
 - recherche ;
 - favoris ;
 - vues enregistrées ;

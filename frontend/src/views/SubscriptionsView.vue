@@ -544,6 +544,7 @@ onMounted(
           :loading="loading"
           paginator
           :rows="10"
+          :rows-per-page-options="[10, 20, 50]"
           
           
         >
