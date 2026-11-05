@@ -12,6 +12,7 @@ import {
 } from '../interfaces/connector.interface';
 import { safeGet, SafeHttpResponse } from '../utils/safe-http-client';
 import { crossrefSearchQuery, parseSearchSubjects } from '../utils/content-filter';
+import { stripHtmlTags } from '../../common/utils/strip-html';
 
 interface CrossrefConnectorConfig {
   baseUrl?: string;
@@ -208,9 +209,9 @@ export class CrossrefConnector implements BaseConnector {
 
         doi: item.DOI,
 
-        title: title ?? 'Sans titre',
+        title: stripHtmlTags(title) || 'Sans titre',
 
-        summary: item.abstract ?? '',
+        summary: stripHtmlTags(item.abstract),
 
         url: item.URL,
 

@@ -113,7 +113,7 @@ export class ReportsService {
     const content = [
       ['Titre', 'Source', 'Type de veille', 'Statut', 'Criticité', 'Pertinence', 'Résumé', 'Date de la source', 'Lien'].map(escape).join(';'),
       ...rows.map((item) => [
-        item.title,
+        this.plainText(item.title),
         item.source?.name,
         WATCH_TYPE_LABELS[item.watchType] ?? item.watchType,
         WATCH_STATUS_LABELS[item.status] ?? item.status,
@@ -173,7 +173,7 @@ export class ReportsService {
 
     rows.forEach((item, index) => {
       const row = sheet.addRow([
-        item.title,
+        this.plainText(item.title),
         item.source?.name ?? 'Non renseignée',
         WATCH_TYPE_LABELS[item.watchType] ?? item.watchType,
         WATCH_STATUS_LABELS[item.status] ?? item.status,
@@ -221,7 +221,7 @@ export class ReportsService {
 
       rows.forEach((item, index) => {
         if (document.y > 700) document.addPage();
-        document.fillColor('#0f172a').fontSize(12).text(`${index + 1}. ${item.title}`, { continued: false });
+        document.fillColor('#0f172a').fontSize(12).text(`${index + 1}. ${this.plainText(item.title)}`, { continued: false });
         document.moveDown(0.25);
         document.fillColor('#475569').fontSize(9).text(`Source : ${item.source?.name ?? 'Non renseignée'}`);
         document.text(`Type : ${WATCH_TYPE_LABELS[item.watchType] ?? item.watchType}`);

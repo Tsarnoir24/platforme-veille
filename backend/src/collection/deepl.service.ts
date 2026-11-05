@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { stripHtmlNullable, stripHtmlTags } from '../common/utils/strip-html';
 type DeepLTranslation = { text: string; detected_source_language?: string };
 type DeepLResponse = { translations?: DeepLTranslation[] };
 type TranslationInput = {
@@ -36,13 +37,17 @@ export class DeepLService {
   }
 
   async translate<T extends TranslationInput>(item: T): Promise<TranslationResult<T>> {
+    const cleanTitle = stripHtmlTags(item.title) || item.title;
+    const cleanSummary = stripHtmlNullable(item.summary);
     const sourceItem: TranslationResult<T> = {
       ...item,
-      originalTitle: item.originalTitle ?? item.title,
-      originalSummary: item.originalSummary ?? item.summary,
+      title: cleanTitle,
+      summary: cleanSummary,
+      originalTitle: stripHtmlTags(item.originalTitle ?? cleanTitle) || cleanTitle,
+      originalSummary: stripHtmlNullable(item.originalSummary ?? cleanSummary),
       originalLanguage: item.originalLanguage ?? item.language,
-      frenchTitle: item.frenchTitle ?? null,
-      frenchSummary: item.frenchSummary ?? null,
+      frenchTitle: stripHtmlNullable(item.frenchTitle),
+      frenchSummary: stripHtmlNullable(item.frenchSummary),
     };
     if (/^fr(?:-|$)/i.test(sourceItem.language ?? '')) {
       return { ...sourceItem, frenchTitle: sourceItem.title, frenchSummary: sourceItem.summary };
@@ -99,21 +104,25 @@ export class DeepLService {
         }
 
         const originalLanguage = translations[0].detected_source_language?.toLowerCase();
+        const translatedTitle = stripHtmlTags(translations[0].text) || sourceItem.title;
+        const translatedSummary = translations[1]?.text
+          ? stripHtmlNullable(translations[1].text)
+          : null;
         return {
           ...sourceItem,
-          title: originalLanguage === 'fr' ? sourceItem.title : translations[0].text,
+          title: originalLanguage === 'fr' ? sourceItem.title : translatedTitle,
           summary: sourceItem.summary
             ? translations[1]?.detected_source_language?.toLowerCase() === 'fr'
               ? sourceItem.summary
-              : translations[1]?.text ?? sourceItem.summary
+              : translatedSummary ?? sourceItem.summary
             : null,
           language: originalLanguage ?? item.language,
           originalLanguage: originalLanguage ?? sourceItem.originalLanguage,
-          frenchTitle: originalLanguage === 'fr' ? sourceItem.title : translations[0].text,
+          frenchTitle: originalLanguage === 'fr' ? sourceItem.title : translatedTitle,
           frenchSummary: sourceItem.summary
             ? (translations[1]?.detected_source_language?.toLowerCase() === 'fr'
               ? sourceItem.summary
-              : translations[1]?.text ?? null)
+              : translatedSummary)
             : null,
           // L'empreinte originale reste stable pour reconnaître les doublons.
         };
@@ -152,8 +161,10 @@ export class DeepLService {
       throw new Error('Réponse DeepL incomplète.');
     }
     let index = 0;
-    const title = data.translations[index++].text;
-    const summary = item.summary ? data.translations[index]?.text ?? item.summary : null;
+    const title = stripHtmlTags(data.translations[index++].text) || stripHtmlTags(item.title);
+    const summary = item.summary
+      ? stripHtmlNullable(data.translations[index]?.text ?? item.summary)
+      : null;
     return { title, summary };
   }
 }

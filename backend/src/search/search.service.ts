@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
 import { WatchItem } from '../watch-items/entities/watch-item.entity';
 import { SearchWatchItemsDto } from './dto/search-watch-items.dto';
+import { stripHtmlNullable, stripHtmlTags } from '../common/utils/strip-html';
 
 @Injectable()
 export class SearchService {
@@ -96,6 +97,16 @@ export class SearchService {
     qb.addOrderBy('item.id', 'DESC');
     qb.skip((dto.page - 1) * dto.limit).take(dto.limit);
     const [items, total] = await qb.getManyAndCount();
+    for (const item of items) {
+      item.title = stripHtmlTags(item.title) || item.title;
+      item.originalTitle = stripHtmlNullable(item.originalTitle);
+      item.frenchTitle = stripHtmlNullable(item.frenchTitle);
+      item.englishTitle = stripHtmlNullable(item.englishTitle);
+      item.summary = stripHtmlNullable(item.summary);
+      item.originalSummary = stripHtmlNullable(item.originalSummary);
+      item.frenchSummary = stripHtmlNullable(item.frenchSummary);
+      item.englishSummary = stripHtmlNullable(item.englishSummary);
+    }
     return {
       items,
       total,

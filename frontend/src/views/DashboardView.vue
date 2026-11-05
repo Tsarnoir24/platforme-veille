@@ -29,6 +29,7 @@ import {
 import {
   useAuthStore,
 } from '../stores/auth';
+import { stripHtmlTags } from '../utils/clean-text';
 
 
 const auth =
@@ -652,7 +653,7 @@ urgent in
                   ">
                 <div>
                   <strong>
-                    {{ urgent.title }}
+                    {{ stripHtmlTags(urgent.title) }}
                   </strong>
 
                   <small>
@@ -696,7 +697,7 @@ action in
                   </strong>
 
                   <small>
-                    {{ action.watchItemTitle }}
+                    {{ stripHtmlTags(action.watchItemTitle) }}
                   </small>
                 </div>
 

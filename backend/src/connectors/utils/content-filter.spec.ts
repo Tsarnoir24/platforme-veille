@@ -25,7 +25,7 @@ describe('sujets à surveiller séparés par des virgules', () => {
 
   it('propose le même format simple pour chaque catégorie', () => {
     expect(defaultQueryForCategory('ACCREDITATION')).toContain('ISO 17025,');
-    expect(defaultQueryForCategory('ENVIRONNEMENT')).toContain('environnement, environment');
+    expect(defaultQueryForCategory('ENVIRONNEMENT')).toContain('environnement, pollution');
     expect(crossrefSearchQuery('ISO 17025, bonbon sucré salé')).toBe('iso 17025 bonbon sucre sale');
   });
 

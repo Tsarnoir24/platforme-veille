@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { stripHtmlTags } from '../../utils/clean-text';
+
 withDefaults(
   defineProps<{
     title?: string;
@@ -33,7 +35,7 @@ withDefaults(
         <h3 v-if="title">
           <i v-if="icon" :class="icon" aria-hidden="true" />
 
-          {{ title }}
+          {{ stripHtmlTags(title) }}
         </h3>
 
         <p v-if="subtitle">

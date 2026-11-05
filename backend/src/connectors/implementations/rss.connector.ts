@@ -81,8 +81,8 @@ export class RssConnector implements BaseConnector {
         const feed = await this.parser.parseString(content);
         return feed.items.map((item) => ({
           externalId: item.guid ?? item.id ?? item.link,
-          title: item.title ?? 'Sans titre',
-          summary: item.contentSnippet ?? item.content ?? '',
+          title: this.stripHtml(item.title) || 'Sans titre',
+          summary: this.stripHtml(item.contentSnippet ?? item.content) ?? '',
           url: item.link,
           publishedAt: this.parseDate(item.isoDate ?? item.pubDate),
           raw: item,
@@ -193,9 +193,9 @@ export class RssConnector implements BaseConnector {
           'id', 'guid', 'externalId', 'external_id', 'uuid',
         ]) || url,
         doi: this.firstText(item, ['doi', 'DOI']),
-        title: this.firstText(item, [
+        title: this.stripHtml(this.firstText(item, [
           'title', 'name', 'headline', 'label', 'title.rendered',
-        ]) || 'Sans titre',
+        ])) || 'Sans titre',
         summary: this.stripHtml(this.firstText(item, [
           'summary', 'description', 'abstract', 'excerpt', 'snippet', 'body',
           'content_text', 'content_html', 'content',
@@ -224,7 +224,7 @@ export class RssConnector implements BaseConnector {
       const url = this.firstText(item, ['url', 'link', 'lien', 'adresse']);
       return {
         externalId: this.firstText(item, ['id', 'guid', 'external_id', 'externalid']) || url,
-        title: row[titleIndex]?.trim() || 'Sans titre',
+        title: this.stripHtml(row[titleIndex]) || 'Sans titre',
         summary: this.stripHtml(this.firstText(item, ['summary', 'resume', 'description', 'content'])),
         url,
         publishedAt: this.parseDate(this.firstText(item, [
@@ -306,7 +306,13 @@ export class RssConnector implements BaseConnector {
   }
 
   private stripHtml(value?: string) {
-    return value?.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/\s+/g, ' ').trim();
+    return value
+      ?.replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/<\/?[a-zA-Z][^>]*>/g, '')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   private wait(milliseconds: number) {

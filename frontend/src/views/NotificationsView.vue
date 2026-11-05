@@ -27,6 +27,7 @@ import {
   actionError,
   actionSuccess,
 } from '../utils/action-toast';
+import { stripHtmlTags } from '../utils/clean-text';
 
 
 interface NotificationItem {
@@ -511,7 +512,7 @@ notification in
 
               <p>
                 {{
-                  notification.message
+                  stripHtmlTags(notification.message)
                 }}
               </p>
 

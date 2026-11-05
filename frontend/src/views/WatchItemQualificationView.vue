@@ -29,6 +29,7 @@ import AppLayout from '../layouts/AppLayout.vue';
 import PageHeader from '../components/ui/PageHeader.vue';
 import SectionCard from '../components/ui/SectionCard.vue';
 import { safeExternalUrl } from '../utils/safe-external-url';
+import { stripHtmlTags } from '../utils/clean-text';
 import { useAuthStore } from '../stores/auth';
 
 import {
@@ -124,15 +125,23 @@ const availableDisplayLanguages = computed(() => {
 });
 const displayedQualificationTitle = computed(() => {
     if (!item.value) return '';
-    if (displayLanguage.value === 'original') return item.value.originalTitle ?? item.value.title;
-    if (displayLanguage.value === 'en') return item.value.englishTitle ?? item.value.title;
-    return item.value.frenchTitle ?? item.value.title;
+    const raw =
+        displayLanguage.value === 'original'
+            ? (item.value.originalTitle ?? item.value.title)
+            : displayLanguage.value === 'en'
+                ? (item.value.englishTitle ?? item.value.title)
+                : (item.value.frenchTitle ?? item.value.title);
+    return stripHtmlTags(raw);
 });
 const displayedQualificationSummary = computed(() => {
     if (!item.value) return null;
-    if (displayLanguage.value === 'original') return item.value.originalSummary ?? item.value.summary;
-    if (displayLanguage.value === 'en') return item.value.englishSummary ?? item.value.summary;
-    return item.value.frenchSummary ?? item.value.summary;
+    const raw =
+        displayLanguage.value === 'original'
+            ? (item.value.originalSummary ?? item.value.summary)
+            : displayLanguage.value === 'en'
+                ? (item.value.englishSummary ?? item.value.summary)
+                : (item.value.frenchSummary ?? item.value.summary);
+    return raw ? stripHtmlTags(raw) : null;
 });
 
 async function selectDisplayLanguage(language: 'fr' | 'original' | 'en') {

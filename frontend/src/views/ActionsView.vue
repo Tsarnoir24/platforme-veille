@@ -47,6 +47,7 @@ import {
 import {
     statusSeverity,
 } from '../utils/status-severity';
+import { stripHtmlTags } from '../utils/clean-text';
 
 
 const router =
@@ -504,7 +505,7 @@ onMounted(
                                 )
                                 ">
                                 {{
-                                    data.watchItem?.title
+                                    stripHtmlTags(data.watchItem?.title)
                                 }}
                             </button>
 
@@ -651,7 +652,7 @@ onMounted(
         <Dialog v-model:visible="detailDialog" modal header="Détails de l'action" class="w-full max-w-xl">
             <div v-if="detailAction" class="action-detail-dialog">
                 <h3>{{ detailAction.title }}</h3>
-                <p v-if="detailAction.watchItem"><strong>Veille :</strong> {{ detailAction.watchItem.title }}</p>
+                <p v-if="detailAction.watchItem"><strong>Veille :</strong> {{ stripHtmlTags(detailAction.watchItem.title) }}</p>
                 <div class="detail-status"><strong>Statut :</strong><Tag :value="labelFr(detailAction.status)"
                     :severity="statusSeverity(detailAction.status)" /></div>
                 <dl class="detail-grid">

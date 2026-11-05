@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -14,11 +14,12 @@ import { DeduplicationService } from './deduplication.service';
 
 import { NormalizedWatchItem } from './interfaces/normalized-watch-item.interface';
 import { AiAnalysisService } from '../ai/ai-analysis.service';
+import { stripHtmlNullable, stripHtmlTags } from '../common/utils/strip-html';
 
 export type IngestionResult = 'CREE' | 'MIS_A_JOUR' | 'DOUBLON';
 
 @Injectable()
-export class WatchItemsService {
+export class WatchItemsService implements OnModuleInit {
   constructor(
     @InjectRepository(WatchItem)
     private readonly watchItemRepository: Repository<WatchItem>,
@@ -29,6 +30,72 @@ export class WatchItemsService {
     private readonly deduplicationService: DeduplicationService,
     private readonly aiAnalysis: AiAnalysisService,
   ) {}
+
+  async onModuleInit(): Promise<void> {
+    await this.sanitizeExistingHtmlTags();
+  }
+
+  private sanitizeItemFields<T extends Partial<WatchItem>>(item: T): T {
+    if (typeof item.title === 'string') {
+      item.title = stripHtmlTags(item.title) || item.title;
+    }
+    if (typeof item.originalTitle === 'string') {
+      item.originalTitle = stripHtmlTags(item.originalTitle) || item.originalTitle;
+    }
+    if (typeof item.frenchTitle === 'string') {
+      item.frenchTitle = stripHtmlNullable(item.frenchTitle);
+    }
+    if (typeof item.englishTitle === 'string') {
+      item.englishTitle = stripHtmlNullable(item.englishTitle);
+    }
+    if (typeof item.summary === 'string') {
+      item.summary = stripHtmlNullable(item.summary);
+    }
+    if (typeof item.originalSummary === 'string') {
+      item.originalSummary = stripHtmlNullable(item.originalSummary);
+    }
+    if (typeof item.frenchSummary === 'string') {
+      item.frenchSummary = stripHtmlNullable(item.frenchSummary);
+    }
+    if (typeof item.englishSummary === 'string') {
+      item.englishSummary = stripHtmlNullable(item.englishSummary);
+    }
+    return item;
+  }
+
+  async sanitizeExistingHtmlTags(): Promise<void> {
+    try {
+      const dirtyItems = await this.watchItemRepository
+        .createQueryBuilder('item')
+        .where(
+          "item.title ~ '<[a-zA-Z/]' OR item.title ~ '&lt;[a-zA-Z/]' OR " +
+          "COALESCE(item.original_title, '') ~ '<[a-zA-Z/]' OR COALESCE(item.original_title, '') ~ '&lt;[a-zA-Z/]' OR " +
+          "COALESCE(item.french_title, '') ~ '<[a-zA-Z/]' OR COALESCE(item.french_title, '') ~ '&lt;[a-zA-Z/]' OR " +
+          "COALESCE(item.english_title, '') ~ '<[a-zA-Z/]' OR COALESCE(item.english_title, '') ~ '&lt;[a-zA-Z/]' OR " +
+          "COALESCE(item.summary, '') ~ '<[a-zA-Z/]' OR COALESCE(item.summary, '') ~ '&lt;[a-zA-Z/]' OR " +
+          "COALESCE(item.original_summary, '') ~ '<[a-zA-Z/]' OR COALESCE(item.original_summary, '') ~ '&lt;[a-zA-Z/]' OR " +
+          "COALESCE(item.french_summary, '') ~ '<[a-zA-Z/]' OR COALESCE(item.french_summary, '') ~ '&lt;[a-zA-Z/]' OR " +
+          "COALESCE(item.english_summary, '') ~ '<[a-zA-Z/]' OR COALESCE(item.english_summary, '') ~ '&lt;[a-zA-Z/]'",
+        )
+        .getMany();
+
+      if (dirtyItems.length > 0) {
+        for (const item of dirtyItems) {
+          this.sanitizeItemFields(item);
+        }
+        await this.watchItemRepository.save(dirtyItems);
+      }
+
+      // Also clean notifications messages that might contain <i>...</i> from watch item titles
+      await this.watchItemRepository.manager.query(
+        `UPDATE notifications
+         SET message = BTRIM(REGEXP_REPLACE(REGEXP_REPLACE(message, '&lt;/?[a-zA-Z][^&]*&gt;', '', 'g'), '</?[a-zA-Z][^>]*>', '', 'g'))
+         WHERE message ~ '</?[a-zA-Z]' OR message ~ '&lt;/?[a-zA-Z]'`,
+      );
+    } catch {
+      // Ignore if table does not exist yet during unit tests
+    }
+  }
 
   async isUnchanged(normalized: NormalizedWatchItem): Promise<boolean> {
     const existing = await this.deduplicationService.findExisting(normalized);
@@ -178,8 +245,8 @@ export class WatchItemsService {
     await this.versionRepository.save(version);
   }
 
-  findAll() {
-    return this.watchItemRepository.find({
+  async findAll() {
+    const items = await this.watchItemRepository.find({
       relations: {
         source: true,
       },
@@ -190,6 +257,7 @@ export class WatchItemsService {
 
       take: 100,
     });
+    return items.map((item) => this.sanitizeItemFields(item));
   }
 
   async findOne(id: number) {
@@ -206,7 +274,7 @@ export class WatchItemsService {
       throw new NotFoundException('Élément de veille introuvable');
     }
 
-    return item;
+    return this.sanitizeItemFields(item);
   }
 
   async saveEnglishTranslation(id: number, translation: { title: string; summary: string | null }) {

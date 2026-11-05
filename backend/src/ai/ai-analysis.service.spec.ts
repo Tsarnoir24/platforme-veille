@@ -8,12 +8,14 @@ describe('AiAnalysisService - configuration externe', () => {
   const items = { existsBy: vi.fn(), findOne: vi.fn() };
   const connectors = { findOne: vi.fn() };
   const laboratories = { find: vi.fn() };
+  const watchCategories = { find: vi.fn() };
   const audit = { log: vi.fn() };
   const service = new AiAnalysisService(
     analyses as never,
     items as never,
     connectors as never,
     laboratories as never,
+    watchCategories as never,
     config as never,
     audit as never,
   );

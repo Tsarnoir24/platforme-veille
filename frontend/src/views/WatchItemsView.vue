@@ -40,6 +40,7 @@ import SectionCard from '../components/ui/SectionCard.vue';
 import SourceTypeBadge from '../components/ui/SourceTypeBadge.vue';
 import StatusBadge from '../components/ui/StatusBadge.vue';
 import { safeExternalUrl } from '../utils/safe-external-url';
+import { renderSafeInlineHtml, stripHtmlTags } from '../utils/clean-text';
 
 import {
   errorFr,
@@ -114,14 +115,7 @@ function queryAiQualification(value: unknown): AiQualificationFilter {
 }
 
 function titleHtml(title: string): string {
-  return title
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-    .replace(/&lt;em&gt;/gi, '<em>')
-    .replace(/&lt;\/em&gt;/gi, '</em>');
+  return renderSafeInlineHtml(title);
 }
 
 function queryNumber(value: unknown, fallback: number, min: number, max: number): number {
@@ -1839,7 +1833,7 @@ view in
             <template #body="{ data }">
               <p class="watch-summary">
                 {{
-                  data.summary
+                  stripHtmlTags(data.summary)
                   ||
                   'Aucun résumé disponible.'
                 }}

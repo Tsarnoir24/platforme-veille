@@ -49,6 +49,7 @@ import PageHeader
 import SectionCard
     from '../components/ui/SectionCard.vue';
 import { safeExternalUrl } from '../utils/safe-external-url';
+import { renderSafeInlineHtml, stripHtmlTags } from '../utils/clean-text';
 
 import StatusBadge
     from '../components/ui/StatusBadge.vue';
@@ -156,19 +157,16 @@ const displayedTitle = computed(() => {
     if (displayLanguage.value === 'en') return item.value.englishTitle ?? item.value.title;
     return item.value.frenchTitle ?? item.value.title;
 });
-const displayedTitleHtml = computed(() => displayedTitle.value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-    .replace(/&lt;em&gt;/gi, '<em>')
-    .replace(/&lt;\/em&gt;/gi, '</em>'));
+const displayedTitleHtml = computed(() => renderSafeInlineHtml(displayedTitle.value));
 const displayedSummary = computed(() => {
     if (!item.value) return null;
-    if (displayLanguage.value === 'original') return item.value.originalSummary ?? item.value.summary;
-    if (displayLanguage.value === 'en') return item.value.englishSummary ?? item.value.summary;
-    return item.value.frenchSummary ?? item.value.summary;
+    const raw =
+        displayLanguage.value === 'original'
+            ? (item.value.originalSummary ?? item.value.summary)
+            : displayLanguage.value === 'en'
+                ? (item.value.englishSummary ?? item.value.summary)
+                : (item.value.frenchSummary ?? item.value.summary);
+    return raw ? stripHtmlTags(raw) : null;
 });
 const summaryCanExpand = computed(() => (displayedSummary.value?.length ?? 0) > 350);
 

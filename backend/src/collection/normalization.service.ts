@@ -7,6 +7,7 @@ import { ExternalItem } from '../connectors/interfaces/connector.interface';
 import { Source } from '../sources/entities/source.entity';
 
 import { NormalizedWatchItem } from '../watch-items/interfaces/normalized-watch-item.interface';
+import { stripHtmlTags } from '../common/utils/strip-html';
 
 @Injectable()
 export class NormalizationService {
@@ -58,7 +59,7 @@ export class NormalizationService {
   }
 
   private cleanText(value?: string): string {
-    return value?.replace(/\s+/g, ' ').trim() ?? '';
+    return stripHtmlTags(value);
   }
 
   private normalizeDoi(doi?: string): string | null {
