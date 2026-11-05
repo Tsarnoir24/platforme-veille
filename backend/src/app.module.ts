@@ -28,6 +28,7 @@ import { Domain } from './taxonomy/entities/domain.entity';
 import { Laboratory } from './taxonomy/entities/laboratory.entity';
 import { Keyword } from './taxonomy/entities/keyword.entity';
 import { KeywordSynonym } from './taxonomy/entities/keyword-synonym.entity';
+import { WatchCategory } from './taxonomy/entities/watch-category.entity';
 import { WatchItemTopic } from './watch-items/entities/watch-item-topic.entity';
 import { WatchItemKeyword } from './watch-items/entities/watch-item-keyword.entity';
 import { ValidationModule } from './validation/validation.module';
@@ -102,6 +103,7 @@ import { UserPasswordHistory } from './auth/entities/user-password-history.entit
         CollectionRun,
         Topic,
         Domain,
+        WatchCategory,
         Laboratory,
         Keyword,
         KeywordSynonym,
