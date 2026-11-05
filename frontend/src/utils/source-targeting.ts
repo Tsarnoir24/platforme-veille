@@ -1,14 +1,24 @@
 const DEFAULT_QUERIES: Record<string, string> = {
-  SCIENTIFIQUE: 'scientifique, scientific, recherche, research, étude, study, laboratoire, laboratory, microbiologie, microbiology, analyse, analysis',
-  REGLEMENTAIRE: 'règlement, regulation, regulatory, directive, décret, loi, law, conformité, compliance, législation, legislation',
-  ACCREDITATION: 'ISO 17025, ISO/IEC 17025, accréditation, accreditation, laboratoire, laboratory, essais, testing, étalonnage, calibration',
-  NORMATIF: 'norme, standard, ISO, IEC, AFNOR, ASTM, BSI, normalisation, standardization, conformité, compliance',
-  ENVIRONNEMENT: 'environnement, environment, pollution, eau, water, pesticide, sol, soil, air, déchet, waste',
+  SCIENTIFIQUE: 'scientifique, recherche, étude, laboratoire, microbiologie, analyse, chromatographie, spectrométrie, validation de méthode, détection',
+  REGLEMENTAIRE: 'règlement, directive, décret, arrêté, loi, conformité, législation, avis sanitaire, limite maximale de résidus, LMR, rappel de produit, alerte',
+  ACCREDITATION: 'ISO 17025, ISO/IEC 17025, accréditation, COFRAC, SOAC, audit, essai d’aptitude, intercomparaison, compétence technique, traçabilité métrologique',
+  NORMATIF: 'norme, standard, ISO, IEC, AFNOR, ASTM, CEN, normalisation, méthode de référence, spécification technique, Codex Alimentarius',
+  ENVIRONNEMENT: 'environnement, pollution, qualité de l’eau, eau potable, pesticide, sol, nappe phréatique, effluent, déchet, rejet, métaux lourds',
   AUTRE: '',
 };
 
+let dynamicCategoriesMap: Record<string, string> = {};
+
+export function registerCategoryQueries(categories: Array<{ code: string; defaultQuery?: string | null; default_query?: string | null }>) {
+  for (const cat of categories) {
+    if (cat.code) {
+      dynamicCategoriesMap[cat.code] = cat.defaultQuery || cat.default_query || DEFAULT_QUERIES[cat.code] || '';
+    }
+  }
+}
+
 export function defaultSourceQuery(category: string): string {
-  return DEFAULT_QUERIES[category] ?? '';
+  return dynamicCategoriesMap[category] ?? DEFAULT_QUERIES[category] ?? '';
 }
 
 export function simpleSourceQuery(query: string): string {

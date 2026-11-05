@@ -145,3 +145,43 @@ export function updateKeyword(
 export function deleteKeyword(id: number) {
   return api.delete(`/taxonomy/keywords/${id}`);
 }
+
+
+export interface WatchCategory {
+  id: number;
+  code: string;
+  name: string;
+  description: string | null;
+  defaultQuery: string | null;
+  default_query?: string | null;
+  active: boolean;
+}
+
+export function getCategories() {
+  return api.get<WatchCategory[]>("/taxonomy/categories");
+}
+
+export function createCategory(payload: {
+  name: string;
+  description?: string | null;
+  defaultQuery?: string | null;
+  active?: boolean;
+}) {
+  return api.post("/taxonomy/categories", payload);
+}
+
+export function updateCategory(
+  id: number,
+  payload: {
+    name?: string;
+    description?: string | null;
+    defaultQuery?: string | null;
+    active?: boolean;
+  },
+) {
+  return api.patch(`/taxonomy/categories/${id}`, payload);
+}
+
+export function deleteCategory(id: number) {
+  return api.delete(`/taxonomy/categories/${id}`);
+}

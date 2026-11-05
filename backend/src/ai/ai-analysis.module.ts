@@ -7,6 +7,7 @@ import { Connector } from '../connectors/entities/connector.entity';
 import { WatchItem } from '../watch-items/entities/watch-item.entity';
 import { User } from '../users/entities/user.entity';
 import { Laboratory } from '../taxonomy/entities/laboratory.entity';
+import { WatchCategory } from '../taxonomy/entities/watch-category.entity';
 import { AiAnalysisController } from './ai-analysis.controller';
 import { AiAnalysisService } from './ai-analysis.service';
 import { WatchItemAiAnalysis } from './entities/watch-item-ai-analysis.entity';
@@ -15,7 +16,7 @@ import { WatchItemAiAnalysis } from './entities/watch-item-ai-analysis.entity';
   imports: [
     ConfigModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    TypeOrmModule.forFeature([WatchItemAiAnalysis, WatchItem, Connector, User, Laboratory]),
+    TypeOrmModule.forFeature([WatchItemAiAnalysis, WatchItem, Connector, User, Laboratory, WatchCategory]),
     AuditModule,
   ],
   providers: [AiAnalysisService],

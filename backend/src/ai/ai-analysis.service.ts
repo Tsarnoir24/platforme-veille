@@ -14,6 +14,7 @@ import { Repository } from 'typeorm';
 import { AuditService } from '../audit/audit.service';
 import { Connector } from '../connectors/entities/connector.entity';
 import { Laboratory } from '../taxonomy/entities/laboratory.entity';
+import { WatchCategory } from '../taxonomy/entities/watch-category.entity';
 import { WatchItem } from '../watch-items/entities/watch-item.entity';
 import { ReviewAiAnalysisDto } from './dto/review-ai-analysis.dto';
 import { WatchItemAiAnalysis } from './entities/watch-item-ai-analysis.entity';
@@ -124,7 +125,15 @@ const INSTRUCTIONS = [
   'Indique uniquement des impacts potentiels et des vérifications suggérées. Ne conclus jamais à la conformité ou non-conformité du laboratoire.',
   'Le score aide à prioriser mais ne prend aucune décision. N’affirme pas qu’une action est obligatoire si la source ne le dit pas.',
   'Pour chaque mot-clé proposé, fournis un poids entier de 1 à 10 dans keywordWeights, dans le même ordre que keywords ; ce poids représente son importance pour cette veille. Si keywords est vide, keywordWeights doit être vide.',
-  'Propose en français une catégorie de veille, des libellés courts de thèmes, domaines, mots-clés et laboratoire/service potentiellement concernés, en te fondant sur le contenu et les sujets fournis. Pour les laboratoires, utilise uniquement les noms de laboratoires disponibles transmis dans laboratoiresDisponibles ; si aucun n’est pertinent, retourne une liste vide. N’invente jamais un nom absent de cette liste.',
+  'Classification obligatoire du type de veille (classification.watchType) : tu dois faire un effort rigoureux pour attribuer la catégorie exacte et éviter impérativement "AUTRE" sauf impossibilité absolue. Applique ces critères stricts :',
+  '- REGLEMENTAIRE : lois, décrets, arrêtés, avis d\'autorités sanitaires (ANSES, EFSA, FDA), limites maximales de résidus (LMR), rappels de produits, alertes de santé publique, directives ministérielles.',
+  '- SCIENTIFIQUE : articles de recherche, études expérimentales, publications scientifiques (Nature, PLOS, Science, revues spécialisées), découvertes, protocoles d\'analyses physico-chimiques ou biologiques.',
+  '- NORMATIF : normes techniques (ISO/CEI, AFNOR, CEN, ASTM, Codex Alimentarius), guides de bonnes pratiques de mesure, méthodes de référence.',
+  '- ACCREDITATION : exigences du COFRAC, SOAC, ILAC, audits qualité, essais d\'intercomparaison / essais d\'aptitude, management de la qualité ISO 17025.',
+  '- ENVIRONNEMENT : écologie, pollution des eaux/sols/air, changements climatiques, déchets, émissions, protection de la biodiversité.',
+  '- Si la catégorie de la source (categorieSource) est déjà renseignée et cohérente avec le contenu, privilégie-la en priorité avant d\'envisager un autre choix.',
+  '- AUTRE : strictement réservé aux contenus administratifs généraux qui ne rentrent dans aucune des 5 catégories ci-dessus.',
+  'Propose également des libellés courts de thèmes, domaines, mots-clés et laboratoire/service potentiellement concernés, en te fondant sur le contenu et les sujets fournis. Pour les laboratoires, utilise uniquement les noms de laboratoires disponibles transmis dans laboratoiresDisponibles ; si aucun n’est pertinent, retourne une liste vide. N’invente jamais un nom absent de cette liste.',
 ].join(' ');
 
 @Injectable()
@@ -145,6 +154,8 @@ export class AiAnalysisService {
     private readonly connectors: Repository<Connector>,
     @InjectRepository(Laboratory)
     private readonly laboratories: Repository<Laboratory>,
+    @InjectRepository(WatchCategory)
+    private readonly watchCategories: Repository<WatchCategory>,
     private readonly config: ConfigService,
     private readonly audit: AuditService,
   ) {}
@@ -214,6 +225,8 @@ export class AiAnalysisService {
       const laboratoryCatalog = (await this.laboratories.find({ where: { active: true }, select: { name: true } }))
         .map(({ name }) => name)
         .slice(0, 100);
+      const activeCategories = await this.watchCategories.find({ where: { active: true } });
+      const categoryCodes = activeCategories.map((c) => c.code);
       const title = (item.frenchTitle || item.title || '')
         .trim()
         .slice(0, 1000);
@@ -247,6 +260,7 @@ export class AiAnalysisService {
         category: item.source.category,
         subjects,
         laboratoryCatalog,
+        allowedCategories: categoryCodes,
       });
       const proposal = assessment.proposal;
       const saved = await this.analyses.save(
@@ -427,6 +441,7 @@ export class AiAnalysisService {
     category: string;
     subjects: string;
     laboratoryCatalog: string[];
+    allowedCategories?: string[];
   }): Promise<AssessmentResult> {
     const startedAt = Date.now();
     const candidates = this.getCandidateProviders().filter((provider) => this.getApiKeys(provider).length > 0);
@@ -469,6 +484,8 @@ export class AiAnalysisService {
     category: string;
     subjects: string;
     laboratoryCatalog: string[];
+    allowedCategories?: string[];
+    context?: string;
   }, provider: AiProvider): Promise<AiResponse> {
     const apiKey = this.getApiKey(provider);
     const model = this.getModel(provider);
@@ -482,6 +499,7 @@ export class AiAnalysisService {
       contexteLaboratoire: context,
       categorieSource: input.category,
       sujetsSurveilles: input.subjects || 'Non précisés',
+      categoriesDisponibles: input.allowedCategories?.length ? input.allowedCategories : ['SCIENTIFIQUE', 'REGLEMENTAIRE', 'ACCREDITATION', 'NORMATIF', 'ENVIRONNEMENT', 'AUTRE'],
       laboratoiresDisponibles: input.laboratoryCatalog,
       langueOriginale: input.language,
       titre: input.title,
@@ -627,7 +645,22 @@ export class AiAnalysisService {
     const classification = (source.classification ?? source.classification_proposee ?? {}) as Record<string, unknown>;
     const pick = (camel: string, snake: string, fallback: unknown) => source[camel] ?? source[snake] ?? fallback;
     const classPick = (camel: string, snake: string, fallback: unknown) => classification[camel] ?? classification[snake] ?? fallback;
-    const watchType = classPick('watchType', 'watch_type', 'AUTRE');
+    const rawWatchType = String(classPick('watchType', 'watch_type', ''))
+      .trim()
+      .toUpperCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+
+    const resolvedWatchType = ((): string => {
+      if (WATCH_TYPE_VALUES.includes(rawWatchType as typeof WATCH_TYPE_VALUES[number])) return rawWatchType;
+      if (rawWatchType.includes('REGLEMENT')) return 'REGLEMENTAIRE';
+      if (rawWatchType.includes('SCIENTIF')) return 'SCIENTIFIQUE';
+      if (rawWatchType.includes('NORM')) return 'NORMATIF';
+      if (rawWatchType.includes('ACCREDIT')) return 'ACCREDITATION';
+      if (rawWatchType.includes('ENVIRON')) return 'ENVIRONNEMENT';
+      return 'AUTRE';
+    })();
+
     return {
       relevanceScore: pick('relevanceScore', 'relevance_score', 0),
       relevanceReason: pick('relevanceReason', 'relevance_reason', 'Aucune justification fournie par le fournisseur.'),
@@ -635,7 +668,7 @@ export class AiAnalysisService {
       potentialImpacts: pick('potentialImpacts', 'potential_impacts', []),
       recommendedChecks: pick('recommendedChecks', 'recommended_checks', []),
       classification: {
-        watchType: WATCH_TYPE_VALUES.includes(watchType as typeof WATCH_TYPE_VALUES[number]) ? watchType : 'AUTRE',
+        watchType: resolvedWatchType,
         themes: classPick('themes', 'themes_proposes', []),
         domains: classPick('domains', 'domaines', []),
         keywords: classPick('keywords', 'mots_cles', []),

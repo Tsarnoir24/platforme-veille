@@ -6,6 +6,7 @@ import { Role } from '../roles/entities/role.entity';
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 import { UserPasswordHistory } from '../auth/entities/user-password-history.entity';
+import { RefreshSession } from '../auth/entities/refresh-session.entity';
 
 describe('UsersService', () => {
   it('ne retourne comme assignables que les comptes actifs', async () => {
@@ -28,6 +29,7 @@ describe('UsersService', () => {
         { provide: getRepositoryToken(User), useValue: repository },
         { provide: getRepositoryToken(Role), useValue: {} },
         { provide: getRepositoryToken(UserPasswordHistory), useValue: {} },
+        { provide: getRepositoryToken(RefreshSession), useValue: { delete: vi.fn() } },
         { provide: AuditService, useValue: { log: vi.fn() } },
       ],
     }).compile();

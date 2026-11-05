@@ -5,12 +5,13 @@ import { Domain } from './entities/domain.entity';
 import { Laboratory } from './entities/laboratory.entity';
 import { Keyword } from './entities/keyword.entity';
 import { KeywordSynonym } from './entities/keyword-synonym.entity';
-import { CreateTopicDto, UpdateTopicDto, CreateNamedTermDto, UpdateNamedTermDto, CreateKeywordDto, UpdateKeywordDto, CreateSynonymDto, UpdateSynonymDto } from './dto/taxonomy.dto';
+import { WatchCategory } from './entities/watch-category.entity';
+import { CreateTopicDto, UpdateTopicDto, CreateNamedTermDto, UpdateNamedTermDto, CreateKeywordDto, UpdateKeywordDto, CreateSynonymDto, UpdateSynonymDto, CreateCategoryDto, UpdateCategoryDto } from './dto/taxonomy.dto';
 import { AuditService } from '../audit/audit.service';
 
-const entities = { topics: Topic, domains: Domain, laboratories: Laboratory, keywords: Keyword, synonyms: KeywordSynonym };
+const entities = { topics: Topic, domains: Domain, laboratories: Laboratory, keywords: Keyword, synonyms: KeywordSynonym, categories: WatchCategory };
 export type TaxonomyKind = keyof typeof entities;
-type TaxonomyPayload = CreateTopicDto | UpdateTopicDto | CreateNamedTermDto | UpdateNamedTermDto | CreateKeywordDto | UpdateKeywordDto | CreateSynonymDto | UpdateSynonymDto;
+type TaxonomyPayload = CreateTopicDto | UpdateTopicDto | CreateNamedTermDto | UpdateNamedTermDto | CreateKeywordDto | UpdateKeywordDto | CreateSynonymDto | UpdateSynonymDto | CreateCategoryDto | UpdateCategoryDto;
 
 @Injectable()
 export class TaxonomyService {
@@ -25,6 +26,7 @@ export class TaxonomyService {
     laboratories: { action: 'LABORATORY', entity: 'laboratories' },
     keywords: { action: 'KEYWORD', entity: 'keywords' },
     synonyms: { action: 'KEYWORD_SYNONYM', entity: 'keyword_synonyms' },
+    categories: { action: 'CATEGORY', entity: 'watch_categories' },
   };
 
   private repository(kind: TaxonomyKind): Repository<ObjectLiteral> {
@@ -53,6 +55,11 @@ export class TaxonomyService {
 
   private async payload(kind: TaxonomyKind, dto: TaxonomyPayload, id?: number) {
     const values: ObjectLiteral = { ...dto };
+    if (kind === 'categories' && 'name' in values && typeof values.name === 'string') {
+      if (!values.code) {
+        values.code = this.generateCategoryCode(values.name);
+      }
+    }
     if (kind === 'topics' && 'parentId' in values) {
       const parentId = values.parentId;
       delete values.parentId;
@@ -85,9 +92,20 @@ export class TaxonomyService {
     }
   }
 
+
+  private generateCategoryCode(name: string): string {
+    return name
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 50);
+  }
+
   private snapshot(item: ObjectLiteral) {
     const result: Record<string, unknown> = {};
-    for (const key of ['id', 'label', 'name', 'description', 'weight', 'active']) {
+    for (const key of ['id', 'label', 'name', 'code', 'description', 'defaultQuery', 'default_query', 'weight', 'active']) {
       if (key in item) result[key] = item[key];
     }
     if ('parent' in item) result.parentId = item.parent?.id ?? null;

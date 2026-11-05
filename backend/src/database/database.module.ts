@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { User } from '../users/entities/user.entity';
 import { Role } from '../roles/entities/role.entity';
+import { UserPasswordHistory } from '../auth/entities/user-password-history.entity';
 
 import { DatabaseSeedService } from './database-seed.service';
 
@@ -11,6 +12,7 @@ import { DatabaseSeedService } from './database-seed.service';
     TypeOrmModule.forFeature([
       User,
       Role,
+      UserPasswordHistory,
     ]),
   ],
 

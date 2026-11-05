@@ -7,6 +7,7 @@ import {
 } from 'vue';
 
 import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import Select from 'primevue/select';
@@ -402,6 +403,27 @@ watch(
 );
 
 
+const searchQuery = ref('');
+
+const filteredSubscriptions = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase();
+  if (!q) {
+    return subscriptions.value;
+  }
+  return subscriptions.value.filter((sub) => {
+    const typeLabel = labelFr(sub.subscriptionType).toLowerCase();
+    const name = targetName(sub).toLowerCase();
+    const channel = labelFr(sub.channel).toLowerCase();
+    const status = sub.active ? 'actif' : 'inactif';
+    return (
+      typeLabel.includes(q) ||
+      name.includes(q) ||
+      channel.includes(q) ||
+      status.includes(q)
+    );
+  });
+});
+
 onMounted(
   load,
 );
@@ -496,17 +518,42 @@ onMounted(
       <SectionCard :title="`${subscriptions.length} abonnement${subscriptions.length > 1 ? 's' : ''}`
         " subtitle="Liste de vos abonnements actifs et inactifs." icon="pi pi-list">
 
-        <DataTable :value="subscriptions
-          " :loading="loading
-            " paginator :rows="10
-            ">
+        <div class="subscriptions-search-toolbar">
+          <div class="search-box">
+            <i class="pi pi-search search-icon" />
+            <InputText
+              v-model="searchQuery"
+              placeholder="Rechercher un abonnement ..."
+              class="search-input"
+            />
+            <Button
+              v-if="searchQuery"
+              icon="pi pi-times"
+              text
+              rounded
+              size="small"
+              class="clear-search-btn"
+              aria-label="Effacer la recherche"
+              @click="searchQuery = ''"
+            />
+          </div>
+        </div>
+
+        <DataTable
+          :value="filteredSubscriptions"
+          :loading="loading"
+          paginator
+          :rows="10"
+          
+          
+        >
 
           <template #empty>
             Aucun abonnement enregistré.
           </template>
 
 
-          <Column header="Type">
+          <Column field="subscriptionType" header="Type" sortable>
             <template #body="{ data }">
               {{
                 labelFr(
@@ -517,7 +564,7 @@ onMounted(
           </Column>
 
 
-          <Column header="Élément suivi">
+          <Column header="Élément suivi" sortable :sortField="(data: any) => targetName(data)">
             <template #body="{ data }">
               <strong class="target-name">
                 {{
@@ -530,7 +577,7 @@ onMounted(
           </Column>
 
 
-          <Column header="Mode de notification">
+          <Column field="channel" header="Mode de notification" sortable>
             <template #body="{ data }">
               {{
                 labelFr(
@@ -541,7 +588,7 @@ onMounted(
           </Column>
 
 
-          <Column header="Statut" style="width: 8rem">
+          <Column field="active" header="Statut" style="width: 9rem" sortable>
             <template #body="{ data }">
               <Tag :value="data.active
                   ? 'Actif'
@@ -702,4 +749,42 @@ onMounted(
       1fr;
   }
 }
+
+.subscriptions-search-toolbar {
+  margin-bottom: 0.9rem;
+  display: flex;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  max-width: 420px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-color-secondary, #64748b);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding-left: 2.3rem !important;
+  padding-right: 2rem !important;
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+  padding: 0 !important;
+  color: var(--text-color-secondary, #64748b);
+}
+
 </style>

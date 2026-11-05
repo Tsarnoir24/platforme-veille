@@ -7,6 +7,7 @@ import {
 } from 'vue';
 
 import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
 import Tag from 'primevue/tag';
 
 import {
@@ -66,6 +67,13 @@ const activeTab =
 const loading =
   ref(false);
 
+const searchQuery = ref('');
+const sortOrder = ref<'desc' | 'asc'>('desc');
+
+function toggleSort() {
+  sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc';
+}
+
 const reading =
   ref<number[]>([]);
 
@@ -104,14 +112,22 @@ const readNotifications =
   );
 
 
-const visibleNotifications =
-  computed(
-    () =>
-      activeTab.value ===
-        'unread'
-        ? unreadNotifications.value
-        : readNotifications.value,
-  );
+const visibleNotifications = computed(() => {
+  const base = activeTab.value === 'unread' ? unreadNotifications.value : readNotifications.value;
+  const q = searchQuery.value.trim().toLowerCase();
+  let filtered = base;
+  if (q) {
+    filtered = base.filter((n) =>
+      (n.title && n.title.toLowerCase().includes(q)) ||
+      (n.message && n.message.toLowerCase().includes(q))
+    );
+  }
+  return [...filtered].sort((a, b) => {
+    const timeA = new Date(a.createdAt).getTime();
+    const timeB = new Date(b.createdAt).getTime();
+    return sortOrder.value === 'desc' ? timeB - timeA : timeA - timeB;
+  });
+});
 
 
 const dateFormatter =
@@ -331,7 +347,37 @@ onBeforeUnmount(
         eyebrow="Alertes" icon="pi pi-bell" />
 
 
-      <div class="notification-tabs">
+            <div class="notifications-toolbar">
+        <div class="search-box">
+          <i class="pi pi-search search-icon" />
+          <InputText
+            v-model="searchQuery"
+            placeholder="Rechercher une notification en temps réel..."
+            class="search-input"
+          />
+          <Button
+            v-if="searchQuery"
+            icon="pi pi-times"
+            text
+            rounded
+            size="small"
+            class="clear-search-btn"
+            aria-label="Effacer la recherche"
+            @click="searchQuery = ''"
+          />
+        </div>
+        <Button
+          type="button"
+          :icon="sortOrder === 'desc' ? 'pi pi-sort-amount-down' : 'pi pi-sort-amount-up-alt'"
+          :label="sortOrder === 'desc' ? 'Plus récentes en premier' : 'Plus anciennes en premier'"
+          severity="secondary"
+          outlined
+          size="small"
+          class="sort-toggle-btn"
+          @click="toggleSort"
+        />
+      </div>
+<div class="notification-tabs">
 
         <button type="button" class="tab-button" :class="{
           active:
@@ -825,4 +871,49 @@ notification in
   font-size:
     0.7rem;
 }
+
+.notifications-toolbar {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 0.85rem;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  min-width: 260px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-color-secondary, #64748b);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding-left: 2.3rem !important;
+  padding-right: 2rem !important;
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+  padding: 0 !important;
+  color: var(--text-color-secondary, #64748b);
+}
+
+.sort-toggle-btn {
+  white-space: nowrap;
+}
+
 </style>

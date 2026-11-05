@@ -4,7 +4,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { TaxonomyService } from './taxonomy.service';
-import { CreateTopicDto, UpdateTopicDto, CreateNamedTermDto, UpdateNamedTermDto, CreateKeywordDto, UpdateKeywordDto, CreateSynonymDto, UpdateSynonymDto } from './dto/taxonomy.dto';
+import { CreateTopicDto, UpdateTopicDto, CreateNamedTermDto, UpdateNamedTermDto, CreateKeywordDto, UpdateKeywordDto, CreateSynonymDto, UpdateSynonymDto, CreateCategoryDto, UpdateCategoryDto } from './dto/taxonomy.dto';
 
 interface AuthenticatedRequest extends Request {
   user: { id: number };
@@ -135,4 +135,28 @@ export class TaxonomyController {
     return this.service.remove('synonyms', id, req.user.id);
   }
 
+
+  @Get('categories')
+  listCategory() { return this.service.list('categories'); }
+
+  @Get('categories/:id')
+  getCategory(@Param('id', ParseIntPipe) id: number) { return this.service.findOne('categories', id); }
+
+  @Post('categories')
+  @Roles('ADMIN', 'OPERATEUR_VEILLE')
+  createCategory(@Body() dto: CreateCategoryDto, @Req() req: AuthenticatedRequest) {
+    return this.service.create('categories', dto, req.user.id);
+  }
+
+  @Patch('categories/:id')
+  @Roles('ADMIN', 'OPERATEUR_VEILLE')
+  updateCategory(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateCategoryDto, @Req() req: AuthenticatedRequest) {
+    return this.service.update('categories', id, dto, req.user.id);
+  }
+
+  @Delete('categories/:id')
+  @Roles('ADMIN')
+  deleteCategory(@Param('id', ParseIntPipe) id: number, @Req() req: AuthenticatedRequest) {
+    return this.service.remove('categories', id, req.user.id);
+  }
 }

@@ -48,10 +48,12 @@ import {
 } from '../services/watch-items.service';
 
 import {
+    getCategories,
     getDomains,
     getKeywords,
     getLaboratories,
     getTopics,
+    type WatchCategory,
     type Domain,
     type Keyword,
     type Laboratory,
@@ -348,7 +350,8 @@ async function saveAiReview() {
 }
 
 
-const watchTypeOptions = [
+const dbCategories = ref<WatchCategory[]>([]);
+const defaultWatchTypeOptions = [
     'SCIENTIFIQUE',
     'REGLEMENTAIRE',
     'ACCREDITATION',
@@ -356,6 +359,16 @@ const watchTypeOptions = [
     'ENVIRONNEMENT',
     'AUTRE',
 ];
+
+const categoryDropdownOptions = computed(() => {
+    if (!dbCategories.value.length) return optionsFr(defaultWatchTypeOptions);
+    return dbCategories.value
+        .filter((c: WatchCategory) => c.active)
+        .map((c: WatchCategory) => ({
+            label: c.name || labelFr(c.code),
+            value: c.code,
+        }));
+});
 
 
 const form =
@@ -458,6 +471,7 @@ async function load() {
         const [
             itemResponse,
             qualificationResponse,
+            categoriesResponse,
             topicsResponse,
             keywordsResponse,
             domainsResponse,
@@ -471,6 +485,8 @@ async function load() {
                 getQualification(
                     itemId.value,
                 ),
+
+                getCategories(),
 
                 getTopics(),
 
@@ -535,6 +551,7 @@ async function load() {
         };
 
 
+        dbCategories.value = Array.isArray(categoriesResponse?.data) ? categoriesResponse.data : [];
         topics.value =
             topicsResponse.data;
 
@@ -885,7 +902,7 @@ onMounted(
                                     <div class="ai-field">
                                         <label for="ai-watch-type">Catégorie de veille proposée</label>
                                         <Select id="ai-watch-type" v-model="aiDraft.classificationWatchType"
-                                            :options="optionsFr(watchTypeOptions)" option-label="label"
+                                            :options="categoryDropdownOptions" option-label="label"
                                             option-value="value" class="w-full" />
                                     </div>
                                     <div class="ai-field">
@@ -994,10 +1011,7 @@ onMounted(
 
                                 <div class="select-host">
                                     <Select append-to="self" v-model="form.watchType
-                                        " option-label="label" option-value="value" :options="optionsFr(
-                                            watchTypeOptions,
-                                        )
-                                            " class="w-full" />
+                                        " option-label="label" option-value="value" :options="categoryDropdownOptions" class="w-full" />
                                 </div>
                             </div>
 

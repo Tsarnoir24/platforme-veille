@@ -1163,13 +1163,13 @@ onMounted(
       <SectionCard :title="`${reports.length} rapport${reports.length > 1 ? 's' : ''}`
         " subtitle="Historique des rapports générés." icon="pi pi-folder">
 
-        <DataTable :value="reports" :loading="loading" paginator :rows="10">
+        <DataTable :value="reports" :loading="loading" paginator :rows="10"  >
 
           <template #empty>
             Aucun rapport généré pour le moment.
           </template>
 
-          <Column header="Rapport">
+          <Column field="reportType" header="Rapport" sortable>
             <template #body="{ data }">
               <div class="report-name">
                 <i class="pi pi-file" />
@@ -1178,27 +1178,27 @@ onMounted(
             </template>
           </Column>
 
-          <Column header="Périodicité">
+          <Column field="reportType" header="Périodicité" sortable>
             <template #body="{ data }">
               {{ labelFr(data.reportType) }}
             </template>
           </Column>
 
-          <Column header="Période" style="min-width: 12rem">
+          <Column field="periodStart" header="Période" style="min-width: 12rem" sortable>
             <template #body="{ data }">
               <span class="secondary-text">{{ formatPeriod(data) }}</span>
             </template>
           </Column>
 
-          <Column field="format" header="Format" style="width: 6rem" />
+          <Column field="format" header="Format" style="width: 7rem" sortable />
 
-          <Column header="Statut" style="width: 8rem">
+          <Column field="status" header="Statut" style="width: 9rem" sortable>
             <template #body="{ data }">
               <Tag :value="labelFr(data.status)" :severity="statusSeverity(data.status)" />
             </template>
           </Column>
 
-          <Column header="Généré le">
+          <Column field="generatedAt" header="Généré le" sortable>
             <template #body="{ data }">
               <span class="secondary-text">{{ formatDate(data.generatedAt) }}</span>
             </template>

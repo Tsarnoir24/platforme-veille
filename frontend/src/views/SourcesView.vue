@@ -27,7 +27,8 @@ import SearchIcon from '@primeicons/vue/search';
 import UploadIcon from '@primeicons/vue/upload';
 import { isAxiosError } from 'axios';
 import { buildConnectorConfig } from '../services/connector-config';
-import { defaultSourceQuery } from '../utils/source-targeting';
+import { defaultSourceQuery, registerCategoryQueries } from '../utils/source-targeting';
+import { getCategories, type WatchCategory } from '../services/taxonomy.service';
 import { safeExternalUrl } from '../utils/safe-external-url';
 
 import AppLayout from '../layouts/AppLayout.vue';
@@ -68,6 +69,7 @@ const canImportManual = computed(() => {
 
 const sources = ref<Source[]>([]);
 const loading = ref(false);
+const dbCategories = ref<WatchCategory[]>([]);
 const feedItems = ref<WatchItem[]>([]);
 const feedLoading = ref(false);
 const sourceSearch = ref('');
@@ -258,7 +260,7 @@ async function saveConnector() {
     }
 }
 
-const categoryOptions = [
+const defaultCategoryOptions = [
     'SCIENTIFIQUE',
     'REGLEMENTAIRE',
     'ACCREDITATION',
@@ -266,6 +268,23 @@ const categoryOptions = [
     'ENVIRONNEMENT',
     'AUTRE',
 ];
+
+const categoryOptions = computed(() => {
+    if (!dbCategories.value.length) return defaultCategoryOptions;
+    return dbCategories.value
+        .filter((c) => c.active)
+        .map((c) => c.code);
+});
+
+const categoryDropdownItems = computed(() => {
+    if (!dbCategories.value.length) return optionsFr(defaultCategoryOptions);
+    return dbCategories.value
+        .filter((c) => c.active)
+        .map((c) => ({
+            label: c.name || labelFr(c.code),
+            value: c.code,
+        }));
+});
 
 const sourceTypeOptions = [
     'API',
@@ -401,9 +420,17 @@ async function loadSources() {
     loading.value = true;
 
     try {
-        const response =
-            await getSources();
+        const [sourcesRes, catsRes] = await Promise.allSettled([
+            getSources(),
+            getCategories(),
+        ]);
 
+        if (catsRes.status === 'fulfilled' && Array.isArray(catsRes.value.data)) {
+            dbCategories.value = catsRes.value.data;
+            registerCategoryQueries(catsRes.value.data);
+        }
+
+        const response = sourcesRes.status === 'fulfilled' ? sourcesRes.value : { data: [] };
         sources.value = response.data.map((source) => ({
             ...source,
             sourceType: getSourceType(source),
@@ -668,7 +695,10 @@ onMounted(() => {
                     lorsqu’elle est à qualifier, validée ou publiée.
                 </p>
                 <DataTable class="compact-table" :value="sourceRows" :loading="loading || feedLoading" paginator
-                    :first="sourceTableFirst" :rows="10" @page="sourceTableFirst = $event.first">
+                    :first="sourceTableFirst" :rows="10" :rows-per-page-options="[5, 10, 20, 50]"
+                    paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport"
+                    current-page-report-template="{first} à {last} sur {totalRecords} sources"
+                    @page="sourceTableFirst = $event.first">
                     <template #empty>
                         {{ sourceSearch.trim() ? 'Aucune source ne correspond à la recherche.' : 'Aucune source enregistrée.' }}
                     </template>
@@ -823,7 +853,7 @@ onMounted(() => {
                         <div>
                             <label for="edit-source-category" class="required-label mb-2 block">Catégorie</label>
                             <div class="select-host">
-                              <Select append-to="self" id="edit-source-category" v-model="editForm.category" :options="optionsFr(categoryOptions)"
+                              <Select append-to="self" id="edit-source-category" v-model="editForm.category" :options="categoryDropdownItems"
                                 option-label="label" option-value="value" class="w-full" required
                                 :disabled="editSubmitting" />
                             </div>

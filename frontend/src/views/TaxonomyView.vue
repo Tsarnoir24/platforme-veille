@@ -38,22 +38,27 @@ import PageHeader from '../components/ui/PageHeader.vue';
 import SectionCard from '../components/ui/SectionCard.vue';
 
 import {
+  createCategory,
   createDomain,
   createKeyword,
   createLaboratory,
   createTopic,
+  deleteCategory,
   deleteDomain,
   deleteKeyword,
   deleteLaboratory,
   deleteTopic,
+  getCategories,
   getDomains,
   getKeywords,
   getLaboratories,
   getTopics,
+  updateCategory,
   updateDomain,
   updateKeyword,
   updateLaboratory,
   updateTopic,
+  type WatchCategory,
   type Domain,
   type Keyword,
   type Laboratory,
@@ -65,6 +70,8 @@ type TaxonomyKind =
   'topics'
   |
   'domains'
+  |
+  'categories'
   |
   'laboratories'
   |
@@ -90,7 +97,7 @@ const toast =
   useToast();
 const route = useRoute();
 const router = useRouter();
-const taxonomyTabs: TaxonomyKind[] = ['topics', 'domains', 'laboratories', 'keywords'];
+const taxonomyTabs: TaxonomyKind[] = ['topics', 'domains', 'categories', 'laboratories', 'keywords'];
 const initialTab = typeof route.query.tab === 'string' && taxonomyTabs.includes(route.query.tab as TaxonomyKind)
   ? route.query.tab as TaxonomyKind
   : 'topics';
@@ -109,6 +116,9 @@ const topics =
 const domains =
   ref<Domain[]>([]);
 
+const categories =
+  ref<WatchCategory[]>([]);
+
 const laboratories =
   ref<Laboratory[]>([]);
 
@@ -118,6 +128,7 @@ const keywords =
 const taxonomySearch = ref<Record<TaxonomyKind, string>>({
   topics: '',
   domains: '',
+  categories: '',
   laboratories: '',
   keywords: '',
 });
@@ -128,6 +139,7 @@ function matchesTaxonomySearch(value: string, query: string) {
 
 const filteredTopics = computed(() => topics.value.filter((item) => matchesTaxonomySearch(`${item.label} ${item.description ?? ''}`, taxonomySearch.value.topics)));
 const filteredDomains = computed(() => domains.value.filter((item) => matchesTaxonomySearch(`${item.name} ${item.description ?? ''}`, taxonomySearch.value.domains)));
+const filteredCategories = computed(() => categories.value.filter((item) => matchesTaxonomySearch(`${item.name} ${item.code} ${item.description ?? ''} ${item.defaultQuery ?? ''}`, taxonomySearch.value.categories)));
 const filteredLaboratories = computed(() => laboratories.value.filter((item) => matchesTaxonomySearch(`${item.name} ${item.description ?? ''}`, taxonomySearch.value.laboratories)));
 const filteredKeywords = computed(() => keywords.value.filter((item) => matchesTaxonomySearch(`${item.label} ${item.weight}`, taxonomySearch.value.keywords)));
 
@@ -151,6 +163,9 @@ const topicDialog =
 const domainDialog =
   ref(false);
 
+const categoryDialog =
+  ref(false);
+
 const laboratoryDialog =
   ref(false);
 
@@ -167,6 +182,11 @@ const editingTopicId =
   );
 
 const editingDomainId =
+  ref<number | null>(
+    null,
+  );
+
+const editingCategoryId =
   ref<number | null>(
     null,
   );
@@ -211,6 +231,14 @@ const domainForm =
 
     active:
       true,
+  });
+
+const categoryForm =
+  ref({
+    name: '',
+    description: '',
+    defaultQuery: '',
+    active: true,
   });
 
 
@@ -423,12 +451,14 @@ async function loadAll() {
     const [
       topicsResponse,
       domainsResponse,
+      categoriesResponse,
       laboratoriesResponse,
       keywordsResponse,
     ] =
       await Promise.all([
         getTopics(),
         getDomains(),
+        getCategories(),
         getLaboratories(),
         getKeywords(),
       ]);
@@ -438,6 +468,9 @@ async function loadAll() {
 
     domains.value =
       domainsResponse.data;
+
+    categories.value =
+      categoriesResponse.data;
 
     laboratories.value =
       laboratoriesResponse.data;
@@ -552,6 +585,29 @@ function editDomain(
     true;
 }
 
+
+
+function openNewCategory() {
+  editingCategoryId.value = null;
+  categoryForm.value = {
+    name: '',
+    description: '',
+    defaultQuery: '',
+    active: true,
+  };
+  categoryDialog.value = true;
+}
+
+function editCategory(cat: WatchCategory) {
+  editingCategoryId.value = cat.id;
+  categoryForm.value = {
+    name: cat.name,
+    description: cat.description ?? '',
+    defaultQuery: cat.defaultQuery ?? cat.default_query ?? '',
+    active: cat.active,
+  };
+  categoryDialog.value = true;
+}
 
 function openNewLaboratory() {
   editingLaboratoryId.value =
@@ -788,6 +844,31 @@ async function submitDomain() {
 }
 
 
+
+async function submitCategory() {
+  if (saving.value) return;
+  saving.value = true;
+  error.value = '';
+  const id = editingCategoryId.value;
+  try {
+    if (id) {
+      await updateCategory(id, categoryForm.value);
+    } else {
+      await createCategory(categoryForm.value);
+    }
+    categoryDialog.value = false;
+    showSuccess(
+      id ? 'Catégorie modifiée' : 'Catégorie créée',
+      `La catégorie « ${categoryForm.value.name} » a été enregistrée avec succès.`,
+    );
+    await loadAll();
+  } catch (cause: unknown) {
+    showFailure(cause, 'Enregistrement de la catégorie');
+  } finally {
+    saving.value = false;
+  }
+}
+
 async function submitLaboratory() {
   if (
     saving.value
@@ -960,6 +1041,9 @@ async function confirmDelete() {
       domains:
         deleteDomain,
 
+      categories:
+        deleteCategory,
+
       laboratories:
         deleteLaboratory,
 
@@ -1041,6 +1125,10 @@ onMounted(
 
             <Tab value="domains">
               Domaines
+            </Tab>
+
+            <Tab value="categories">
+              Catégories de veille
             </Tab>
 
             <Tab value="laboratories">
@@ -1290,6 +1378,112 @@ onMounted(
 
             </TabPanel>
 
+
+
+            <!-- CATEGORIES DE VEILLE -->
+
+            <TabPanel value="categories">
+              <div class="panel-content">
+
+                <div class="panel-header">
+                  <div>
+                    <h3>
+                      Catégories de veille
+                    </h3>
+                    <p>
+                      Grandes catégories de classification métier avec sujets à surveiller par défaut.
+                    </p>
+                  </div>
+
+                  <Button label="Nouvelle catégorie" @click="openNewCategory">
+                    <template #icon>
+                      <PlusIcon size="0.9rem" />
+                    </template>
+                  </Button>
+                </div>
+
+                <InputText
+                  v-model="taxonomySearch.categories"
+                  placeholder="Rechercher une catégorie (nom, code, sujets)..."
+                  class="taxonomy-search"
+                />
+
+                  <DataTable
+                    :value="filteredCategories"
+                    :loading="loading"
+                    paginator
+                    :rows="10"
+                    :rows-per-page-options="[10, 20, 50]"
+                  >
+                    <template #empty>
+                      Aucune catégorie de veille enregistrée.
+                    </template>
+
+                    <Column field="name" header="Libellé" sortable style="min-width: 12rem">
+                      <template #body="{ data }">
+                        <strong class="item-title">{{ data.name }}</strong>
+                      </template>
+                    </Column>
+
+                    <Column field="code" header="Code technique" sortable style="min-width: 10rem">
+                      <template #body="{ data }">
+                        <Tag :value="data.code" severity="info" />
+                      </template>
+                    </Column>
+
+                    <Column field="defaultQuery" header="Sujets à surveiller par défaut" style="min-width: 18rem">
+                      <template #body="{ data }">
+                        <span class="text-sm text-slate-300">{{ data.defaultQuery || data.default_query || 'Aucun sujet configuré' }}</span>
+                      </template>
+                    </Column>
+
+                    <Column field="description" header="Description" style="min-width: 14rem">
+                      <template #body="{ data }">
+                        {{ data.description || '—' }}
+                      </template>
+                    </Column>
+
+                    <Column field="active" header="Statut" sortable style="width: 8rem">
+                      <template #body="{ data }">
+                        <Tag
+                          :value="data.active ? 'Actif' : 'Inactif'"
+                          :severity="data.active ? 'success' : 'secondary'"
+                        />
+                      </template>
+                    </Column>
+
+                    <Column
+                      header="Actions"
+                      style="width: 7rem"
+                    >
+                      <template #body="{ data }">
+                        <div class="action-buttons">
+                          <Button
+                            text
+                            severity="secondary"
+                            aria-label="Modifier la catégorie"
+                            @click="editCategory(data)"
+                          >
+                            <template #icon>
+                              <PencilIcon size="0.85rem" />
+                            </template>
+                          </Button>
+                          <Button
+                            text
+                            severity="danger"
+                            aria-label="Supprimer la catégorie"
+                            @click="askDelete({ id: data.id, kind: 'categories', label: data.name, typeLabel: 'catégorie de veille' })"
+                          >
+                            <template #icon>
+                              <TrashIcon size="0.85rem" />
+                            </template>
+                          </Button>
+                        </div>
+                      </template>
+                    </Column>
+                  </DataTable>
+                </div>
+            </TabPanel>
 
             <!-- LABORATOIRES -->
 
@@ -1678,6 +1872,89 @@ onMounted(
 
       </Dialog>
 
+
+
+      <!-- CATEGORIE DE VEILLE -->
+
+      <Dialog
+        v-model:visible="categoryDialog"
+        modal
+        :header="editingCategoryId ? 'Modifier la catégorie de veille' : 'Nouvelle catégorie de veille'"
+        class="w-full max-w-xl"
+        :closable="!saving"
+      >
+        <form class="space-y-4" @submit.prevent="submitCategory">
+          <div>
+            <label class="required-label mb-2 block">
+              Libellé de la catégorie
+            </label>
+            <InputText
+              v-model="categoryForm.name"
+              class="w-full"
+              placeholder="Ex. : Sanitaire, Technologique, Juridique..."
+              required
+            />
+            <p class="mt-1 text-xs text-slate-400">
+              Le code technique sera généré automatiquement à partir de ce libellé.
+            </p>
+          </div>
+
+          <div>
+            <label class="mb-2 block">
+              Sujets à surveiller (séparés par des virgules)
+            </label>
+            <Textarea
+              v-model="categoryForm.defaultQuery"
+              rows="3"
+              class="w-full"
+              placeholder="Ex. : contaminant, pesticide, hygiène, épidémie, stérilité, bactérie..."
+            />
+            <p class="mt-1 text-xs text-slate-400">
+              Ces mots-clés pré-rempliront automatiquement les sources créées sous cette catégorie.
+            </p>
+          </div>
+
+          <div>
+            <label class="mb-2 block">
+              Description
+            </label>
+            <Textarea
+              v-model="categoryForm.description"
+              rows="3"
+              class="w-full"
+              placeholder="Précisions sur le périmètre de cette catégorie de veille..."
+            />
+          </div>
+
+          <div class="select-host">
+            <label class="mb-2 block">
+              Statut
+            </label>
+            <Select
+              append-to="self"
+              v-model="categoryForm.active"
+              :options="statusOptions"
+              option-label="label"
+              option-value="value"
+              class="w-full"
+            />
+          </div>
+
+          <div class="dialog-actions">
+            <Button
+              type="button"
+              label="Annuler"
+              severity="secondary"
+              @click="categoryDialog = false"
+            />
+            <Button
+              type="submit"
+              :label="editingCategoryId ? 'Enregistrer' : 'Créer'"
+              :loading="saving"
+            />
+          </div>
+        </form>
+      </Dialog>
 
       <!-- LABORATOIRE -->
 

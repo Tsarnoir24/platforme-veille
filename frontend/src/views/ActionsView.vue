@@ -10,6 +10,7 @@ import {
 } from 'vue-router';
 
 import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import Dialog from 'primevue/dialog';
@@ -329,6 +330,34 @@ function ownerName(
 }
 
 
+
+const searchQuery = ref('');
+
+const filteredActions = computed(() => {
+    const q = searchQuery.value.trim().toLowerCase();
+    if (!q) {
+        return actions.value;
+    }
+    return actions.value.filter((action) => {
+        const title = (action.title || '').toLowerCase();
+        const watchTitle = (action.watchItem?.title || '').toLowerCase();
+        const actionType = labelFr(action.actionType).toLowerCase();
+        const owner = ownerName(action).toLowerCase();
+        const status = labelFr(action.status).toLowerCase();
+        const comment = (action.progressComment || '').toLowerCase();
+        const result = (action.result || '').toLowerCase();
+        return (
+            title.includes(q) ||
+            watchTitle.includes(q) ||
+            actionType.includes(q) ||
+            owner.includes(q) ||
+            status.includes(q) ||
+            comment.includes(q) ||
+            result.includes(q)
+        );
+    });
+});
+
 onMounted(
     load,
 );
@@ -424,25 +453,38 @@ onMounted(
             </div>
 
 
-            <SectionCard :title="`${actions.length} action${actions.length > 1 ? 's' : ''}`
+            <SectionCard :title="`${filteredActions.length} action${filteredActions.length > 1 ? 's' : ''}`
                 " subtitle="Liste des actions de suivi associées aux éléments de veille." icon="pi pi-list">
 
-                <DataTable :value="actions
-                    " :loading="loading
-                        " paginator :rows="10
-                            " :rows-per-page-options="[
-                    10,
-                    20,
-                    50,
-                ]
-                    ">
+                <div class="actions-search-toolbar">
+                    <div class="search-box">
+                        <i class="pi pi-search search-icon" />
+                        <InputText
+                            v-model="searchQuery"
+                            placeholder="Rechercher une action, une veille, un responsable, un statut..."
+                            class="search-input"
+                        />
+                        <Button
+                            v-if="searchQuery"
+                            icon="pi pi-times"
+                            text
+                            rounded
+                            size="small"
+                            class="clear-search-btn"
+                            aria-label="Effacer la recherche"
+                            @click="searchQuery = ''"
+                        />
+                    </div>
+                </div>
+
+                <DataTable :value="filteredActions" :loading="loading" paginator :rows="10" :rows-per-page-options="[10, 20, 50]">
 
                     <template #empty>
                         Aucune action de suivi enregistrée.
                     </template>
 
 
-                    <Column field="title" header="Action à réaliser" style="min-width: 13rem">
+                    <Column field="title" header="Action à réaliser" sortable style="min-width: 13rem">
                         <template #body="{ data }">
 
                             <strong class="action-title">
@@ -453,7 +495,7 @@ onMounted(
                     </Column>
 
 
-                    <Column header="Veille" style="min-width: 14rem">
+                    <Column header="Veille" sortable :sortField="(data: any) => data.watchItem?.title || ''" style="min-width: 14rem">
                         <template #body="{ data }">
 
                             <button type="button" class="watch-link" @click="
@@ -470,7 +512,7 @@ onMounted(
                     </Column>
 
 
-                    <Column header="Type">
+                    <Column header="Type" sortable :sortField="(data: any) => labelFr(data.actionType)">
                         <template #body="{ data }">
                             {{
                                 labelFr(
@@ -481,7 +523,7 @@ onMounted(
                     </Column>
 
 
-                    <Column header="Responsable">
+                    <Column header="Responsable" sortable :sortField="(data: any) => ownerName(data)">
                         <template #body="{ data }">
                             {{
                                 ownerName(
@@ -492,7 +534,7 @@ onMounted(
                     </Column>
 
 
-                    <Column header="Échéance" style="width: 11rem">
+                    <Column field="dueDate" header="Échéance" sortable style="width: 11rem">
                         <template #body="{ data }">
                             <div class="due-date-cell">
                                 <span class="date-text">
@@ -508,7 +550,7 @@ onMounted(
                     </Column>
 
 
-                    <Column header="Statut" style="width: 8rem">
+                    <Column header="Statut" sortable :sortField="(data: any) => labelFr(data.status)" style="width: 8rem">
                         <template #body="{ data }">
                             <Tag :value="labelFr(
                                 data.status,
@@ -841,4 +883,41 @@ onMounted(
             1fr;
     }
 }
+
+.actions-search-toolbar {
+    margin-bottom: 0.9rem;
+    display: flex;
+}
+
+.search-box {
+    position: relative;
+    flex: 1;
+}
+
+.search-icon {
+    position: absolute;
+    left: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--app-text-muted);
+    font-size: 0.85rem;
+    z-index: 2;
+}
+
+.search-input {
+    width: 100%;
+    padding-left: 2.3rem !important;
+    padding-right: 2.3rem !important;
+}
+
+.clear-search-btn {
+    position: absolute;
+    right: 0.4rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.8rem !important;
+    height: 1.8rem !important;
+    color: var(--app-text-muted) !important;
+}
+
 </style>

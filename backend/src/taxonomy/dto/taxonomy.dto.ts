@@ -50,3 +50,19 @@ export class CreateSynonymDto {
   keywordId: number;
 }
 export class UpdateSynonymDto extends PartialType(CreateSynonymDto, { skipNullProperties: false }) {}
+
+
+export class CreateCategoryDto {
+  @Trim() @IsString() @MinLength(1) @MaxLength(150)
+  name: string;
+
+  @IsOptional() @IsString() @MaxLength(1000)
+  description?: string | null;
+
+  @IsOptional() @IsString() @MaxLength(2000)
+  defaultQuery?: string | null;
+
+  @ValidateIf((_, value) => value !== undefined) @IsBoolean()
+  active?: boolean;
+}
+export class UpdateCategoryDto extends PartialType(CreateCategoryDto, { skipNullProperties: false }) {}

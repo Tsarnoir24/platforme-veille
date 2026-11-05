@@ -14,6 +14,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
 import { AuditService } from '../audit/audit.service';
 import { UserPasswordHistory } from '../auth/entities/user-password-history.entity';
+import { RefreshSession } from '../auth/entities/refresh-session.entity';
 
 @Injectable()
 export class UsersService {
@@ -25,6 +26,8 @@ export class UsersService {
     private readonly roleRepository: Repository<Role>,
     @InjectRepository(UserPasswordHistory)
     private readonly passwordHistory: Repository<UserPasswordHistory>,
+    @InjectRepository(RefreshSession)
+    private readonly refreshSessionRepository: Repository<RefreshSession>,
     private readonly auditService: AuditService,
   ) {}
 
@@ -166,6 +169,9 @@ export class UsersService {
 
     await this.userRepository.save(userWithPassword);
 
+    // Révocation immédiate de toutes les sessions actives de l'utilisateur
+    await this.refreshSessionRepository.delete({ user: { id: userWithPassword.id } });
+
     await this.auditService.log({
       userId: actorId,
       action: 'RESET_USER_PASSWORD_TEMPORARY',
@@ -198,6 +204,10 @@ export class UsersService {
     const beforeValue = { status: user.status };
     user.status = status;
     await this.userRepository.save(user);
+
+    if (status === 'INACTIVE') {
+      await this.refreshSessionRepository.delete({ user: { id: user.id } });
+    }
 
     await this.auditService.log({
       userId: actorId,

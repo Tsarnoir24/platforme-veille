@@ -98,6 +98,9 @@ La plateforme comprend notamment :
 - alertes e-mail ;
 - actions de suivi ;
 - rapports PDF / XLSX / CSV ;
+- API publique sécurisée pour consultation externe (`GET /api/v1/public/watch-items`) ;
+- Webhooks sortants signés cryptographiquement (`HMAC-SHA256`) pour diffusion événementielle vers le Système de Management de la Qualité (SMQ) ;
+- initialisation automatique de la base et script de seed (`npm run seed`) ;
 - journal d’audit ;
 - santé du système ;
 - tableau de bord et KPI.
@@ -547,6 +550,7 @@ Lors de la création d'un utilisateur, l'option **« Générer un mot de passe t
 4. **Indicateur et réinitialisation** :
    - Les comptes en attente de première connexion portent un badge **« MDP temp. »** dans la table des utilisateurs.
    - L’administrateur peut à tout moment régénérer un nouveau mot de passe temporaire pour un utilisateur existant via l'icône de clé (**Générer un mot de passe temporaire**).
+   - **Révocation immédiate des sessions** : lors de la régénération d'un mot de passe temporaire ou de la désactivation d'un compte, toutes les sessions actives de l'utilisateur (`refresh_sessions`) sont immédiatement révoquées et supprimées en base, forçant sa déconnexion instantanée. L'utilisateur doit impérativement se reconnecter avec le mot de passe temporaire fourni.
 
 La migration `AddMustChangePasswordToUsers` doit être exécutée avant d'utiliser cette fonctionnalité. L'historique des mots de passe repose sur des condensats bcrypt dans `user_password_history` ; chaque changement, réinitialisation ou génération d'un nouveau mot de passe temporaire conserve l'ancien condensat et interdit sa réutilisation. La migration `AddUserPasswordHistory` initialise l'historique avec le condensat courant de chaque compte existant ; exécuter les migrations avant le déploiement.
 

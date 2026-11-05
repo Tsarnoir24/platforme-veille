@@ -6,6 +6,7 @@ import { Domain } from './entities/domain.entity';
 import { Laboratory } from './entities/laboratory.entity';
 import { Keyword } from './entities/keyword.entity';
 import { KeywordSynonym } from './entities/keyword-synonym.entity';
+import { WatchCategory } from './entities/watch-category.entity';
 import { TaxonomyController } from './taxonomy.controller';
 import { TaxonomyService } from './taxonomy.service';
 import { AuditModule } from '../audit/audit.module';
@@ -13,7 +14,7 @@ import { AuditModule } from '../audit/audit.module';
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    TypeOrmModule.forFeature([Topic, Domain, Laboratory, Keyword, KeywordSynonym]),
+    TypeOrmModule.forFeature([Topic, Domain, Laboratory, Keyword, KeywordSynonym, WatchCategory]),
     AuditModule,
   ],
   controllers: [TaxonomyController],
