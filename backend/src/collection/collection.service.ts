@@ -82,11 +82,12 @@ export class CollectionService {
     if (!['.csv', '.xlsx', '.pdf'].includes(extension)) {
       throw new BadRequestException('Formats acceptés : PDF, CSV et XLSX.');
     }
-    const parsedRows = extension === '.xlsx'
-      ? await this.readExcel(file.buffer)
-      : extension === '.csv'
-        ? this.readCsv(file.buffer)
-        : await this.readPdf(file.buffer);
+    const parsedRows =
+      extension === '.xlsx'
+        ? await this.readExcel(file.buffer)
+        : extension === '.csv'
+          ? this.readCsv(file.buffer)
+          : await this.readPdf(file.buffer);
     if (!parsedRows.length)
       throw new BadRequestException('Le fichier ne contient aucune donnée.');
     if (parsedRows.length > 5000)
@@ -243,31 +244,49 @@ export class CollectionService {
     return this.rowsToObjects(rows);
   }
 
-  private async readPdf(buffer: Buffer): Promise<Array<Record<string, unknown>>> {
+  private async readPdf(
+    buffer: Buffer,
+  ): Promise<Array<Record<string, unknown>>> {
     const parser = new PDFParse({ data: buffer });
     try {
       const result = await parser.getText();
       const blocks = result.text
         .replace(/\u0000/g, '')
         .split(/\f|\n\s*\n+/)
-        .map((block) => block.split(/\r?\n/).map((line) => line.trim()).filter((line) => line && !/^-- \d+ of \d+ --$/.test(line)))
+        .map((block) =>
+          block
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter((line) => line && !/^-- \d+ of \d+ --$/.test(line)),
+        )
         .filter((lines) => lines.length > 0);
       return blocks.map((lines, index) => {
         const title = lines[0];
         const urlIndex = lines.findIndex((line) => /^URL\s*:/i.test(line));
         const dateIndex = lines.findIndex((line) => /^Date\s*:/i.test(line));
-        const summaryEnd = urlIndex >= 0 ? urlIndex : dateIndex >= 0 ? dateIndex : lines.length;
+        const summaryEnd =
+          urlIndex >= 0 ? urlIndex : dateIndex >= 0 ? dateIndex : lines.length;
         const summary = lines.slice(1, summaryEnd).join(' ').trim();
-        const url = urlIndex >= 0 ? lines[urlIndex].replace(/^URL\s*:\s*/i, '').trim() : '';
-        const date = dateIndex >= 0 ? lines[dateIndex].replace(/^Date\s*:\s*/i, '').trim() : '';
+        const url =
+          urlIndex >= 0
+            ? lines[urlIndex].replace(/^URL\s*:\s*/i, '').trim()
+            : '';
+        const date =
+          dateIndex >= 0
+            ? lines[dateIndex].replace(/^Date\s*:\s*/i, '').trim()
+            : '';
         if (!title || (!summary && !url && !date)) {
-          throw new BadRequestException(`Bloc PDF ${index + 1} : titre ou contenu introuvable.`);
+          throw new BadRequestException(
+            `Bloc PDF ${index + 1} : titre ou contenu introuvable.`,
+          );
         }
         return { titre: title, resume: summary, url, date_publication: date };
       });
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
-      throw new BadRequestException('Le PDF est illisible ou ne contient pas de texte exploitable.');
+      throw new BadRequestException(
+        'Le PDF est illisible ou ne contient pas de texte exploitable.',
+      );
     } finally {
       await parser.destroy();
     }
@@ -519,7 +538,8 @@ export class CollectionService {
             run.duplicateCount++;
             continue;
           }
-          const translated = await this.translationService.translate(normalized);
+          const translated =
+            await this.translationService.translate(normalized);
 
           const ingestion = await this.watchItemsService.ingest(
             connector.source,
@@ -554,7 +574,6 @@ export class CollectionService {
       run.endedAt = new Date();
 
       await this.runRepository.save(run);
-      
 
       return {
         runId: run.id,

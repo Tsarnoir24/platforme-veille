@@ -1,3 +1,5 @@
+import { registerCategoryLabels } from '../i18n/labels';
+
 const DEFAULT_QUERIES: Record<string, string> = {
   SCIENTIFIQUE: 'scientifique, recherche, étude, laboratoire, microbiologie, analyse, chromatographie, spectrométrie, validation de méthode, détection',
   REGLEMENTAIRE: 'règlement, directive, décret, arrêté, loi, conformité, législation, avis sanitaire, limite maximale de résidus, LMR, rappel de produit, alerte',
@@ -9,7 +11,8 @@ const DEFAULT_QUERIES: Record<string, string> = {
 
 let dynamicCategoriesMap: Record<string, string> = {};
 
-export function registerCategoryQueries(categories: Array<{ code: string; defaultQuery?: string | null; default_query?: string | null }>) {
+export function registerCategoryQueries(categories: Array<{ code: string; name?: string | null; defaultQuery?: string | null; default_query?: string | null }>) {
+  registerCategoryLabels(categories);
   for (const cat of categories) {
     if (cat.code) {
       dynamicCategoriesMap[cat.code] = cat.defaultQuery || cat.default_query || DEFAULT_QUERIES[cat.code] || '';

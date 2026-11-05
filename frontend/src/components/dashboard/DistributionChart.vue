@@ -9,7 +9,8 @@ const translations: Record<string, string> = {
   WITHOUT_CONNECTOR: 'Sans connecteur', SANS_CONNECTEUR: 'Sans connecteur', INACTIVE: 'Inactive',
   NOUVEAU: 'Nouveau', A_QUALIFIER: 'À qualifier', VALIDE: 'Validée', PUBLIE: 'Publiée', REJETE: 'Rejetée', ARCHIVE: 'Archivée',
   NON_RENSEIGNEE: 'Non renseignée', FAIBLE: 'Faible', MOYENNE: 'Moyenne', ELEVEE: 'Élevée', CRITIQUE: 'Critique',
-  OPEN: 'Ouverte', IN_PROGRESS: 'En cours', COMPLETED: 'Terminée', CANCELLED: 'Annulée',
+  OPEN: 'Ouverte', IN_PROGRESS: 'En cours', DONE: 'Terminée', COMPLETED: 'Terminée', CANCELLED: 'Annulée',
+  RSS: 'Flux RSS', ATOM: 'Flux Atom', API: 'Interface de données (API)', IMPORT_MANUEL: 'Import manuel',
 };
 function label(value: string) {
   return translations[value.toUpperCase()] ?? value.replaceAll('_', ' ').toLocaleLowerCase('fr-FR').replace(/^./, letter => letter.toUpperCase());

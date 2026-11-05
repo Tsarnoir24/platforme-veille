@@ -27,6 +27,14 @@ import {
   getWatchItems,
 } from '../services/watch-items.service';
 
+import {
+  getCategories,
+} from '../services/taxonomy.service';
+
+import {
+  registerCategoryLabels,
+} from '../i18n/labels';
+
 
 interface AuditLog {
   id:
@@ -232,6 +240,7 @@ const auditGroups:
           'laboratories',
           'keywords',
           'keyword_synonyms',
+          'watch_categories',
         ],
     },
 
@@ -431,6 +440,15 @@ const actionLabels:
   DELETE_KEYWORD_SYNONYM:
     'Suppression d’un synonyme',
 
+  CREATE_CATEGORY:
+    'Création d’une catégorie de veille',
+
+  UPDATE_CATEGORY:
+    'Modification d’une catégorie de veille',
+
+  DELETE_CATEGORY:
+    'Suppression d’une catégorie de veille',
+
   ADD_FAVORITE:
     'Ajout d’une veille aux favoris',
 
@@ -501,6 +519,9 @@ const entityLabels:
 
   keyword_synonyms:
     'Synonymes',
+
+  watch_categories:
+    'Catégories de veille',
 
   saved_views:
     'Vues enregistrées',
@@ -737,6 +758,117 @@ const fieldLabels:
 
   readAt:
     'Date de lecture',
+
+  code:
+    'Code technique',
+
+  defaultQuery:
+    'Sujets à surveiller',
+
+  default_query:
+    'Sujets à surveiller',
+
+  ignored:
+    'Éléments ignorés (hors sujet)',
+
+  filteredCount:
+    'Éléments ignorés (hors sujet)',
+
+  fileName:
+    'Nom du fichier',
+
+  errorDetails:
+    'Détails des erreurs',
+
+  analysisId:
+    'Identifiant de l’analyse IA',
+
+  relevanceScore:
+    'Score de pertinence IA',
+
+  relevanceReason:
+    'Justification de pertinence',
+
+  model:
+    'Modèle IA',
+
+  provider:
+    'Fournisseur IA',
+
+  classification:
+    'Classification proposée',
+
+  themes:
+    'Thèmes proposés',
+
+  domains:
+    'Domaines proposés',
+
+  keywords:
+    'Mots-clés proposés',
+
+  keywordWeights:
+    'Poids des mots-clés',
+
+  laboratories:
+    'Laboratoires proposés',
+
+  rationale:
+    'Justification de classification',
+
+  createdTaxonomy:
+    'Termes de taxonomie créés',
+
+  progressComment:
+    'Commentaire d’avancement',
+
+  startedAt:
+    'Date de début',
+
+  completedAt:
+    'Date de clôture',
+
+  endedAt:
+    'Date de fin',
+
+  reportType:
+    'Type de rapport',
+
+  publishedOnly:
+    'Veilles publiées uniquement',
+
+  query:
+    'Sujets à surveiller',
+
+  feedUrl:
+    'Adresse du flux',
+
+  rows:
+    'Nombre de résultats',
+
+  aiQualified:
+    'Qualification IA',
+
+  addedOrder:
+    'Ordre d’ajout',
+
+  sortBy:
+    'Champ de tri',
+
+  sortOrder:
+    'Ordre de tri',
+
+  favoritesOnly:
+    'Favoris uniquement',
+
+  page:
+    'Page',
+
+  limit:
+    'Éléments par page',
+
+  q:
+    'Recherche textuelle',
 };
 
 
@@ -862,6 +994,81 @@ const valueLabels:
 
   EMAIL:
     'Courriel',
+
+  IN_APP:
+    'Dans l’application',
+
+  PROPOSED:
+    'Proposée',
+
+  REVIEWED:
+    'Relue et corrigée',
+
+  ACCREDITATION:
+    'Accréditation',
+
+  NORMATIF:
+    'Normatif',
+
+  ENVIRONNEMENT:
+    'Environnement',
+
+  ANALYSE_IMPACT:
+    'Analyse d’impact',
+
+  MISE_A_JOUR_METHODE:
+    'Mise à jour de méthode',
+
+  FORMATION:
+    'Formation',
+
+  VERIFICATION:
+    'Vérification',
+
+  VALIDATE:
+    'Validation',
+
+  REJECT:
+    'Rejet',
+
+  WEEKLY:
+    'Hebdomadaire',
+
+  MONTHLY:
+    'Mensuel',
+
+  CUSTOM:
+    'Personnalisé',
+
+  AVAILABLE:
+    'Disponible',
+
+  NOT_TESTED:
+    'Non testé',
+
+  SKIPPED:
+    'Ignorée',
+
+  NOT_GENERATED:
+    'Qualification IA non générée',
+
+  ASC:
+    'Croissant (ancien au récent)',
+
+  DESC:
+    'Décroissant (récent à l’ancien)',
+
+  DOMAIN:
+    'Domaine',
+
+  KEYWORD:
+    'Mot-clé',
+
+  CROSSREF:
+    'Crossref',
+
+  JSON_FEED:
+    'Flux JSON',
 };
 
 
@@ -1436,6 +1643,14 @@ async function load(page = Math.floor(firstRow.value / pageSize.value)) {
         getAuditLogs<AuditLog>({ page, limit: pageSize.value, group: activeGroup.value }),
         getUsers(),
         getWatchItems(),
+        getCategories().then((res) => {
+          if (Array.isArray(res.data)) {
+            registerCategoryLabels(res.data);
+            for (const cat of res.data) {
+              if (cat.code && cat.name) valueLabels[cat.code] = cat.name;
+            }
+          }
+        }),
       ]);
 
 

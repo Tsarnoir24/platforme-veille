@@ -34,6 +34,7 @@ import { useAuthStore } from '../stores/auth';
 import {
     labelFr,
     optionsFr,
+    registerCategoryLabels,
 } from '../i18n/labels';
 
 import {
@@ -552,6 +553,7 @@ async function load() {
 
 
         dbCategories.value = Array.isArray(categoriesResponse?.data) ? categoriesResponse.data : [];
+        registerCategoryLabels(dbCategories.value);
         topics.value =
             topicsResponse.data;
 

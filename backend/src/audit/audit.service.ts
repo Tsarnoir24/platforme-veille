@@ -10,7 +10,7 @@ const AUDIT_GROUP_ENTITIES: Record<Exclude<AuditGroup, 'all'>, string[]> = {
   users: ['users'],
   watch: ['watch_items', 'saved_views'],
   sources: ['sources', 'connectors', 'collection_runs'],
-  taxonomy: ['topics', 'domains', 'laboratories', 'keywords', 'keyword_synonyms'],
+  taxonomy: ['topics', 'domains', 'laboratories', 'keywords', 'keyword_synonyms', 'watch_categories'],
   actions: ['follow_up_actions'],
   alerts: ['subscriptions', 'notifications'],
   reports: ['reports'],
@@ -84,7 +84,8 @@ export class AuditService {
     const entityKinds: Record<string, string> = {
       users: 'users', watch_items: 'watch_items', sources: 'sources', connectors: 'connectors',
       collection_runs: 'collection_runs', topics: 'topics', domains: 'domains',
-      laboratories: 'laboratories', keywords: 'keywords', follow_up_actions: 'follow_up_actions',
+      laboratories: 'laboratories', keywords: 'keywords', watch_categories: 'watch_categories',
+      follow_up_actions: 'follow_up_actions',
       saved_views: 'saved_views', notifications: 'notifications', reports: 'reports',
     };
     const ids = new Map<string, Set<number>>();
@@ -118,6 +119,7 @@ export class AuditService {
       domains: `SELECT id, name AS label FROM domains WHERE id = ANY($1::int[])`,
       laboratories: `SELECT id, name AS label FROM laboratories WHERE id = ANY($1::int[])`,
       keywords: `SELECT id, label FROM keywords WHERE id = ANY($1::int[])`,
+      watch_categories: `SELECT id, name AS label FROM watch_categories WHERE id = ANY($1::int[])`,
       follow_up_actions: `SELECT id, title AS label FROM actions WHERE id = ANY($1::int[])`,
       saved_views: `SELECT id, name AS label FROM saved_views WHERE id = ANY($1::int[])`,
       notifications: `SELECT id, title AS label FROM notifications WHERE id = ANY($1::int[])`,

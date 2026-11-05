@@ -83,7 +83,12 @@ import {
 
 import {
   defaultSourceQuery,
+  registerCategoryQueries,
 } from '../utils/source-targeting';
+import {
+  getCategories,
+  type WatchCategory,
+} from '../services/taxonomy.service';
 
 
 const router =
@@ -170,7 +175,9 @@ const CROSSREF_API_URL =
   'https://api.crossref.org';
 
 
-const sourceCategoryOptions = [
+const dbCategories = ref<WatchCategory[]>([]);
+
+const defaultSourceCategoryOptions = [
   'SCIENTIFIQUE',
   'REGLEMENTAIRE',
   'ACCREDITATION',
@@ -178,6 +185,11 @@ const sourceCategoryOptions = [
   'ENVIRONNEMENT',
   'AUTRE',
 ];
+
+const sourceCategoryOptions = computed(() => {
+  if (!dbCategories.value.length) return defaultSourceCategoryOptions;
+  return dbCategories.value.filter((c) => c.active).map((c) => c.code);
+});
 
 
 const sourceCreationTypeOptions = [
@@ -731,15 +743,24 @@ const criticalityOptions =
   ]);
 
 
-const watchTypeOptions =
-  optionsFr([
-    'SCIENTIFIQUE',
-    'REGLEMENTAIRE',
-    'ACCREDITATION',
-    'NORMATIF',
-    'ENVIRONNEMENT',
-    'AUTRE',
-  ]);
+const watchTypeOptions = computed(() => {
+  if (!dbCategories.value.length) {
+    return optionsFr([
+      'SCIENTIFIQUE',
+      'REGLEMENTAIRE',
+      'ACCREDITATION',
+      'NORMATIF',
+      'ENVIRONNEMENT',
+      'AUTRE',
+    ]);
+  }
+  return dbCategories.value
+    .filter((c) => c.active)
+    .map((c) => ({
+      label: c.name || labelFr(c.code),
+      value: c.code,
+    }));
+});
 
 
 const sourceTypeOptions =
@@ -1069,11 +1090,17 @@ async function loadExtras() {
     const [
       favoritesResponse,
       viewsResponse,
+      categoriesResponse,
     ] =
       await Promise.all([
         getFavorites(),
         getSavedViews(),
+        getCategories().catch(() => ({ data: [] as WatchCategory[] })),
       ]);
+    if (Array.isArray(categoriesResponse.data)) {
+      dbCategories.value = categoriesResponse.data;
+      registerCategoryQueries(categoriesResponse.data);
+    }
 
     favorites.value =
       favoritesResponse.data

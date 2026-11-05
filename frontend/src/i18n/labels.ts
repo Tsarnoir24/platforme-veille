@@ -24,9 +24,21 @@ const labels: Record<string, string> = {
   SOURCE: 'Source', DOMAIN: 'Domaine', TOPIC: 'Thème', KEYWORD: 'Mot-clé',
   GENERATED: 'Généré', SENT: 'Envoyée',
   UP: 'Opérationnelle', DOWN: 'Indisponible', DEGRADED: 'Dégradée',
+  PROPOSED: 'Proposée', REVIEWED: 'Relue et corrigée',
+  TECHNIQUE: 'Technique',
 };
+export function registerCategoryLabels(categories: Array<{ code: string; name?: string | null }>) {
+  for (const cat of categories) {
+    if (cat.code && cat.name) {
+      labels[cat.code] = cat.name;
+    }
+  }
+}
 export function labelFr(value: string | null | undefined): string {
-  return value ? labels[value] ?? value : 'Non renseigné';
+  if (!value) return 'Non renseigné';
+  if (labels[value]) return labels[value];
+  const formatted = value.replaceAll('_', ' ').toLocaleLowerCase('fr-FR');
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
 export function optionsFr(values: string[]) {
   return values.map(value => ({ label: labelFr(value), value }));
