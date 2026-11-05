@@ -43,7 +43,7 @@ export class TaxonomyService {
   list(kind: TaxonomyKind) {
     return this.repository(kind).find({
       relations: this.relations(kind),
-      order: { [kind === 'domains' || kind === 'laboratories' ? 'name' : 'label']: 'ASC' },
+      order: { [kind === 'domains' || kind === 'laboratories' || kind === 'categories' ? 'name' : 'label']: 'ASC' },
     });
   }
 
