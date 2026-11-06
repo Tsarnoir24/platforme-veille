@@ -148,19 +148,24 @@ const CROSSREF_API_URL =
 
 const dynamicCategories = ref<WatchCategory[]>([]);
 
-const categoryOptions = computed(() => {
+const categoryDropdownItems = computed(() => {
     const activeDynamic = dynamicCategories.value.filter((c) => c.active);
     if (activeDynamic.length > 0) {
-        return activeDynamic.map((c) => c.code);
+        return activeDynamic
+            .map((c) => ({
+                label: c.name || labelFr(c.code),
+                value: c.code,
+            }))
+            .sort((a, b) => a.label.localeCompare(b.label, 'fr', { sensitivity: 'base' }));
     }
-    return [
+    return optionsFr([
         'SCIENTIFIQUE',
         'REGLEMENTAIRE',
         'ACCREDITATION',
         'NORMATIF',
         'ENVIRONNEMENT',
         'AUTRE',
-    ];
+    ]);
 });
 
 
@@ -462,6 +467,19 @@ async function changeStatus(
 }
 
 
+async function refreshCategories() {
+    try {
+        const { data } = await getCategories();
+        if (Array.isArray(data)) {
+            dynamicCategories.value = data;
+            registerCategoryLabels(data);
+            registerCategoryQueries(data);
+        }
+    } catch {
+        // Conserve les catégories déjà chargées.
+    }
+}
+
 function openEdit(
     source:
         Source,
@@ -471,6 +489,8 @@ function openEdit(
     ) {
         return;
     }
+
+    void refreshCategories();
 
     editingSource.value =
         source;
@@ -1284,11 +1304,9 @@ onMounted(
                             </label>
 
                             <div class="select-host">
-                                <Select append-to="self" v-model="editForm.category
-                                    " :options="optionsFr(
-                                        categoryOptions,
-                                    )
-                                        " option-label="label" option-value="value" class="w-full" required />
+                                <Select v-model="editForm.category
+                                    " :options="categoryDropdownItems
+                                        " option-label="label" option-value="value" scroll-height="18rem" class="w-full" required />
                             </div>
                         </div>
 

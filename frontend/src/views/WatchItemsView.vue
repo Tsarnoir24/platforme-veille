@@ -49,6 +49,7 @@ import {
 import {
   labelFr,
   optionsFr,
+  registerCategoryLabels,
 } from '../i18n/labels';
 
 import {
@@ -163,17 +164,63 @@ const webPageUrl = ref('');
 const analyzingWebUrl = ref(false);
 const discoveredInfo = ref<DiscoveredSourceResult | null>(null);
 
+function resetNewSourceDialogState() {
+  sourceError.value = '';
+  sourceCreationMode.value = 'DIRECT';
+  webPageUrl.value = '';
+  discoveredInfo.value = null;
+  manualImportFile.value = null;
+  if (manualImportInput.value) manualImportInput.value.value = '';
+  targetQuery.value = '';
+  sourceForm.value = {
+    name: '',
+    organization: '',
+    country: '',
+    category: '',
+    sourceType: '',
+    baseUrl: '',
+    frequency: '',
+    active: true,
+  };
+}
+
+async function refreshCategories() {
+  try {
+    const { data } = await getCategories();
+    if (Array.isArray(data)) {
+      dbCategories.value = data;
+      registerCategoryLabels(data);
+      registerCategoryQueries(data);
+    }
+  } catch {
+    // Conserve les catégories déjà chargées en cas d'erreur réseau.
+  }
+}
+
+function openNewSourceDialog() {
+  resetNewSourceDialogState();
+  void refreshCategories();
+  sourceDialogVisible.value = true;
+}
+
 function switchSourceCreationMode(mode: 'DIRECT' | 'WEB_PAGE') {
   sourceCreationMode.value = mode;
   sourceError.value = '';
-  if (mode === 'WEB_PAGE') {
-    if (!sourceForm.value.sourceType || sourceForm.value.sourceType === 'IMPORT_MANUEL') {
-      sourceForm.value.sourceType = 'RSS';
-    }
-    if (!sourceForm.value.frequency) {
-      sourceForm.value.frequency = '6h';
-    }
-  }
+  webPageUrl.value = '';
+  discoveredInfo.value = null;
+  manualImportFile.value = null;
+  if (manualImportInput.value) manualImportInput.value.value = '';
+  targetQuery.value = '';
+  sourceForm.value = {
+    name: '',
+    organization: '',
+    country: '',
+    category: '',
+    sourceType: '',
+    baseUrl: '',
+    frequency: '',
+    active: true,
+  };
 }
 
 async function analyzeWebPageUrl() {
@@ -232,9 +279,15 @@ const defaultSourceCategoryOptions = [
   'AUTRE',
 ];
 
-const sourceCategoryOptions = computed(() => {
-  if (!dbCategories.value.length) return defaultSourceCategoryOptions;
-  return dbCategories.value.filter((c) => c.active).map((c) => c.code);
+const sourceCategoryDropdownItems = computed(() => {
+  if (!dbCategories.value.length) return optionsFr(defaultSourceCategoryOptions);
+  return dbCategories.value
+    .filter((c) => c.active)
+    .map((c) => ({
+      label: c.name || labelFr(c.code),
+      value: c.code,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label, 'fr', { sensitivity: 'base' }));
 });
 
 
@@ -1157,6 +1210,7 @@ async function loadExtras() {
       ]);
     if (Array.isArray(categoriesResponse.data)) {
       dbCategories.value = categoriesResponse.data;
+      registerCategoryLabels(categoriesResponse.data);
       registerCategoryQueries(categoriesResponse.data);
     }
 
@@ -1664,8 +1718,7 @@ onBeforeUnmount(() => {
           <Button v-if="
             canCreateSource
           " label="Ajouter une source" @click="
-            sourceDialogVisible =
-            true
+            openNewSourceDialog
             ">
             <template #icon>
               <PlusIcon size="0.9rem" />
@@ -2165,9 +2218,6 @@ view in
                 <label class="mb-2 block">Organisme</label>
                 <InputText v-model="sourceForm.organization" class="w-full" />
               </div>
-            </div>
-
-            <div class="grid gap-4 md:grid-cols-3">
               <div>
                 <label class="mb-2 block">Pays</label>
                 <InputText v-model="sourceForm.country" class="w-full" />
@@ -2176,11 +2226,11 @@ view in
                 <label class="required-label mb-2 block">Catégorie</label>
                 <div class="select-host">
                   <Select
-                    append-to="self"
                     v-model="sourceForm.category"
-                    :options="optionsFr(sourceCategoryOptions)"
+                    :options="sourceCategoryDropdownItems"
                     option-label="label"
                     option-value="value"
+                    scroll-height="18rem"
                     class="w-full"
                     required
                   />
@@ -2191,16 +2241,15 @@ view in
                 <InputText v-model="sourceForm.frequency" class="w-full" placeholder="Ex. : 30m, 6h ou 1j" />
                 <p class="helper-text">m : minutes · h : heures · j : jours</p>
               </div>
-            </div>
-
-            <div>
-              <label class="mb-2 block">Sujet à surveiller</label>
-              <InputText
-                v-model="targetQuery"
-                class="w-full"
-                placeholder="Ex. : environnement, ISO 17025, laboratoire, microbiologie"
-              />
-              <p class="helper-text">Séparez les sujets par des virgules.</p>
+              <div>
+                <label class="mb-2 block">Sujet à surveiller</label>
+                <InputText
+                  v-model="targetQuery"
+                  class="w-full"
+                  placeholder="Ex. : environnement, ISO 17025, laboratoire, microbiologie"
+                />
+                <p class="helper-text">Séparez les sujets par des virgules.</p>
+              </div>
             </div>
           </template>
 
@@ -2225,11 +2274,11 @@ view in
                 <label class="required-label mb-2 block">Catégorie</label>
                 <div class="select-host">
                   <Select
-                    append-to="self"
                     v-model="sourceForm.category"
-                    :options="optionsFr(sourceCategoryOptions)"
+                    :options="sourceCategoryDropdownItems"
                     option-label="label"
                     option-value="value"
+                    scroll-height="18rem"
                     class="w-full"
                     required
                   />
@@ -2240,11 +2289,11 @@ view in
                 <label class="required-label mb-2 block">Type</label>
                 <div class="select-host">
                   <Select
-                    append-to="self"
                     v-model="sourceForm.sourceType"
                     :options="optionsFr(sourceCreationTypeOptions)"
                     option-label="label"
                     option-value="value"
+                    scroll-height="18rem"
                     class="w-full"
                     required
                     @update:model-value="applyManualSourceDefaults"

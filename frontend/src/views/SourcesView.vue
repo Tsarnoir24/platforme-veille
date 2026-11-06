@@ -7,7 +7,7 @@ import {
 } from 'vue';
 
 import Button from 'primevue/button';
-import { labelFr, optionsFr } from '../i18n/labels';
+import { labelFr, optionsFr, registerCategoryLabels } from '../i18n/labels';
 import { useToast } from 'primevue/usetoast';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
@@ -134,17 +134,63 @@ const webPageUrl = ref('');
 const analyzingWebUrl = ref(false);
 const discoveredInfo = ref<DiscoveredSourceResult | null>(null);
 
+function resetNewSourceDialogState() {
+    error.value = '';
+    creationMode.value = 'DIRECT';
+    webPageUrl.value = '';
+    discoveredInfo.value = null;
+    newSourceFile.value = null;
+    if (newSourceImportInput.value) newSourceImportInput.value.value = '';
+    crossrefQuery.value = '';
+    form.value = {
+        name: '',
+        organization: '',
+        country: '',
+        category: '',
+        sourceType: '',
+        baseUrl: '',
+        frequency: '',
+        active: true,
+    };
+}
+
+async function refreshCategories() {
+    try {
+        const { data } = await getCategories();
+        if (Array.isArray(data)) {
+            dbCategories.value = data;
+            registerCategoryLabels(data);
+            registerCategoryQueries(data);
+        }
+    } catch {
+        // Conserve les catégories déjà chargées.
+    }
+}
+
+function openNewSourceDialog() {
+    resetNewSourceDialogState();
+    void refreshCategories();
+    dialogVisible.value = true;
+}
+
 function switchCreationMode(mode: 'DIRECT' | 'WEB_PAGE') {
     creationMode.value = mode;
     error.value = '';
-    if (mode === 'WEB_PAGE') {
-        if (!form.value.sourceType || form.value.sourceType === 'IMPORT_MANUEL') {
-            form.value.sourceType = 'RSS';
-        }
-        if (!form.value.frequency) {
-            form.value.frequency = '6h';
-        }
-    }
+    webPageUrl.value = '';
+    discoveredInfo.value = null;
+    newSourceFile.value = null;
+    if (newSourceImportInput.value) newSourceImportInput.value.value = '';
+    crossrefQuery.value = '';
+    form.value = {
+        name: '',
+        organization: '',
+        country: '',
+        category: '',
+        sourceType: '',
+        baseUrl: '',
+        frequency: '',
+        active: true,
+    };
 }
 
 async function analyzeWebPageUrl() {
@@ -320,13 +366,6 @@ const defaultCategoryOptions = [
     'AUTRE',
 ];
 
-const categoryOptions = computed(() => {
-    if (!dbCategories.value.length) return defaultCategoryOptions;
-    return dbCategories.value
-        .filter((c) => c.active)
-        .map((c) => c.code);
-});
-
 const categoryDropdownItems = computed(() => {
     if (!dbCategories.value.length) return optionsFr(defaultCategoryOptions);
     return dbCategories.value
@@ -334,7 +373,8 @@ const categoryDropdownItems = computed(() => {
         .map((c) => ({
             label: c.name || labelFr(c.code),
             value: c.code,
-        }));
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label, 'fr', { sensitivity: 'base' }));
 });
 
 const sourceTypeOptions = [
@@ -417,6 +457,7 @@ watch(() => editForm.value.sourceType, (sourceType, previousType) => {
 
 function openEditDialog(source: Source) {
     if (!canEditSource.value) return;
+    void refreshCategories();
     editingSource.value = source;
     editError.value = '';
     editForm.value = {
@@ -478,6 +519,7 @@ async function loadSources() {
 
         if (catsRes.status === 'fulfilled' && Array.isArray(catsRes.value.data)) {
             dbCategories.value = catsRes.value.data;
+            registerCategoryLabels(catsRes.value.data);
             registerCategoryQueries(catsRes.value.data);
         }
 
@@ -744,7 +786,7 @@ onMounted(() => {
                             placeholder="Rechercher un flux, un titre ou un résumé..." />
                     </div>
                     <Button v-if="canCreateSource" label="Ajouter une source" class="shrink-0"
-                        @click="dialogVisible = true">
+                        @click="openNewSourceDialog">
                         <template #icon><PlusIcon size="0.9rem" /></template>
                     </Button>
                 </div>
@@ -915,8 +957,8 @@ onMounted(() => {
                         <div>
                             <label for="edit-source-category" class="required-label mb-2 block">Catégorie</label>
                             <div class="select-host">
-                              <Select append-to="self" id="edit-source-category" v-model="editForm.category" :options="categoryDropdownItems"
-                                option-label="label" option-value="value" class="w-full" required
+                              <Select id="edit-source-category" v-model="editForm.category" :options="categoryDropdownItems"
+                                option-label="label" option-value="value" scroll-height="18rem" class="w-full" required
                                 :disabled="editSubmitting" />
                             </div>
                         </div>
@@ -1053,9 +1095,6 @@ onMounted(() => {
                                 <label class="mb-2 block">Organisme</label>
                                 <InputText v-model="form.organization" class="w-full" />
                             </div>
-                        </div>
-
-                        <div class="grid gap-4 md:grid-cols-3">
                             <div>
                                 <label class="mb-2 block">Pays</label>
                                 <InputText v-model="form.country" class="w-full" />
@@ -1064,11 +1103,11 @@ onMounted(() => {
                                 <label class="required-label mb-2 block">Catégorie</label>
                                 <div class="select-host">
                                     <Select
-                                        append-to="self"
                                         v-model="form.category"
                                         option-label="label"
                                         option-value="value"
-                                        :options="optionsFr(categoryOptions)"
+                                        :options="categoryDropdownItems"
+                                        scroll-height="18rem"
                                         class="w-full"
                                         required
                                     />
@@ -1079,18 +1118,17 @@ onMounted(() => {
                                 <InputText v-model="form.frequency" class="w-full" placeholder="Ex. : 30m, 6h ou 1j" />
                                 <p class="mt-1 text-xs text-slate-500">m : minutes · h : heures · j : jours</p>
                             </div>
-                        </div>
-
-                        <div>
-                            <label class="mb-2 block">Sujet à surveiller</label>
-                            <InputText
-                                v-model="crossrefQuery"
-                                class="w-full"
-                                placeholder="Ex. : environnement, ISO 17025, laboratoire, microbiologie"
-                            />
-                            <p class="mt-1 text-xs text-slate-500">
-                                Séparez les sujets par des virgules.
-                            </p>
+                            <div>
+                                <label class="mb-2 block">Sujet à surveiller</label>
+                                <InputText
+                                    v-model="crossrefQuery"
+                                    class="w-full"
+                                    placeholder="Ex. : environnement, ISO 17025, laboratoire, microbiologie"
+                                />
+                                <p class="mt-1 text-xs text-slate-500">
+                                    Séparez les sujets par des virgules.
+                                </p>
+                            </div>
                         </div>
                     </template>
 
@@ -1126,7 +1164,7 @@ onMounted(() => {
                                 </label>
 
                                 <div class="select-host">
-                                  <Select append-to="self" v-model="form.category" option-label="label" option-value="value" :options="optionsFr(categoryOptions)" class="w-full" required />
+                                  <Select v-model="form.category" option-label="label" option-value="value" :options="categoryDropdownItems" scroll-height="18rem" class="w-full" required />
                                 </div>
                             </div>
 
@@ -1136,7 +1174,7 @@ onMounted(() => {
                                 </label>
 
                                 <div class="select-host">
-                                  <Select append-to="self" v-model="form.sourceType" option-label="label" option-value="value" :options="optionsFr(sourceTypeOptions)" class="w-full" required @update:model-value="applyManualSourceDefaults" @change="(event) => applyManualSourceDefaults(event.value)" />
+                                  <Select v-model="form.sourceType" option-label="label" option-value="value" :options="optionsFr(sourceTypeOptions)" scroll-height="18rem" class="w-full" required @update:model-value="applyManualSourceDefaults" @change="(event) => applyManualSourceDefaults(event.value)" />
                                 </div>
                             </div>
 
