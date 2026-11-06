@@ -1304,7 +1304,7 @@ onMounted(
                             </label>
 
                             <div class="select-host">
-                                <Select v-model="editForm.category
+                                <Select append-to="self" v-model="editForm.category
                                     " :options="categoryDropdownItems
                                         " option-label="label" option-value="value" scroll-height="18rem" class="w-full" required />
                             </div>
@@ -1375,13 +1375,19 @@ onMounted(
 
 <style scoped>
 :global(.health-edit-dialog) {
-    max-height: calc(100dvh - 2rem);
+    max-height: calc(100dvh - 1.5rem);
+    width: min(50rem, calc(100vw - 2rem)) !important;
+    max-width: min(50rem, calc(100vw - 2rem)) !important;
 }
 
-:global(.health-edit-dialog .p-dialog-content),
-:global(.health-edit-dialog .p-dialog-content:has(.p-select-overlay)) {
+:global(.health-edit-dialog .p-dialog-content) {
     min-height: 0;
     overflow-y: auto !important;
+    padding-bottom: 1.5rem !important;
+}
+
+:global(.health-edit-dialog .p-dialog-content:has(.p-select-overlay)) {
+    overflow: visible !important;
 }
 
 :global(.health-edit-dialog .p-dialog-footer) {

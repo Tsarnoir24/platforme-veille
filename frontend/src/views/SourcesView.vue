@@ -928,7 +928,7 @@ onMounted(() => {
             </Dialog>
 
             <Dialog v-if="canEditSource" v-model:visible="editDialogVisible" modal header="Modifier la source"
-                class="w-full max-w-2xl" :closable="!editSubmitting" :close-on-escape="!editSubmitting">
+                class="watch-source-dialog w-full max-w-2xl" :closable="!editSubmitting" :close-on-escape="!editSubmitting">
                 <form class="space-y-4" @submit.prevent="submitEdit">
                     <Message v-if="editError" severity="error">{{ editError }}</Message>
 
@@ -957,7 +957,7 @@ onMounted(() => {
                         <div>
                             <label for="edit-source-category" class="required-label mb-2 block">Catégorie</label>
                             <div class="select-host">
-                              <Select id="edit-source-category" v-model="editForm.category" :options="categoryDropdownItems"
+                              <Select append-to="self" id="edit-source-category" v-model="editForm.category" :options="categoryDropdownItems"
                                 option-label="label" option-value="value" scroll-height="18rem" class="w-full" required
                                 :disabled="editSubmitting" />
                             </div>
@@ -1023,7 +1023,7 @@ onMounted(() => {
                 </form>
             </Dialog>
 
-            <Dialog v-if="canCreateSource" v-model:visible="dialogVisible" modal header="Nouvelle source" class="w-full max-w-2xl" :closable="!submitting" :close-on-escape="!submitting">
+            <Dialog v-if="canCreateSource" v-model:visible="dialogVisible" modal header="Nouvelle source" class="watch-source-dialog w-full max-w-2xl" :closable="!submitting" :close-on-escape="!submitting">
                 <form class="space-y-4" @submit.prevent="submit">
                     <div class="source-mode-segmented" role="tablist" aria-label="Mode d'ajout de source">
                         <button
@@ -1103,6 +1103,7 @@ onMounted(() => {
                                 <label class="required-label mb-2 block">Catégorie</label>
                                 <div class="select-host">
                                     <Select
+                                        append-to="self"
                                         v-model="form.category"
                                         option-label="label"
                                         option-value="value"
@@ -1164,7 +1165,7 @@ onMounted(() => {
                                 </label>
 
                                 <div class="select-host">
-                                  <Select v-model="form.category" option-label="label" option-value="value" :options="categoryDropdownItems" scroll-height="18rem" class="w-full" required />
+                                  <Select append-to="self" v-model="form.category" option-label="label" option-value="value" :options="categoryDropdownItems" scroll-height="18rem" class="w-full" required />
                                 </div>
                             </div>
 
@@ -1174,7 +1175,7 @@ onMounted(() => {
                                 </label>
 
                                 <div class="select-host">
-                                  <Select v-model="form.sourceType" option-label="label" option-value="value" :options="optionsFr(sourceTypeOptions)" scroll-height="18rem" class="w-full" required @update:model-value="applyManualSourceDefaults" @change="(event) => applyManualSourceDefaults(event.value)" />
+                                  <Select append-to="self" v-model="form.sourceType" option-label="label" option-value="value" :options="optionsFr(sourceTypeOptions)" scroll-height="18rem" class="w-full" required @update:model-value="applyManualSourceDefaults" @change="(event) => applyManualSourceDefaults(event.value)" />
                                 </div>
                             </div>
 

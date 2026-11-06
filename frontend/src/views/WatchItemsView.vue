@@ -2226,6 +2226,7 @@ view in
                 <label class="required-label mb-2 block">Catégorie</label>
                 <div class="select-host">
                   <Select
+                    append-to="self"
                     v-model="sourceForm.category"
                     :options="sourceCategoryDropdownItems"
                     option-label="label"
@@ -2274,6 +2275,7 @@ view in
                 <label class="required-label mb-2 block">Catégorie</label>
                 <div class="select-host">
                   <Select
+                    append-to="self"
                     v-model="sourceForm.category"
                     :options="sourceCategoryDropdownItems"
                     option-label="label"
@@ -2289,6 +2291,7 @@ view in
                 <label class="required-label mb-2 block">Type</label>
                 <div class="select-host">
                   <Select
+                    append-to="self"
                     v-model="sourceForm.sourceType"
                     :options="optionsFr(sourceCreationTypeOptions)"
                     option-label="label"
@@ -2371,13 +2374,19 @@ view in
 
 <style scoped>
 :global(.watch-source-dialog) {
-  max-height: calc(100dvh - 2rem);
+  max-height: calc(100dvh - 1.5rem);
+  width: min(50rem, calc(100vw - 2rem)) !important;
+  max-width: min(50rem, calc(100vw - 2rem)) !important;
 }
 
-:global(.watch-source-dialog .p-dialog-content),
-:global(.watch-source-dialog .p-dialog-content:has(.p-select-overlay)) {
+:global(.watch-source-dialog .p-dialog-content) {
   min-height: 0;
   overflow-y: auto !important;
+  padding-bottom: 1.5rem !important;
+}
+
+:global(.watch-source-dialog .p-dialog-content:has(.p-select-overlay)) {
+  overflow: visible !important;
 }
 
 :global(.watch-source-dialog .p-dialog-footer) {
