@@ -65,6 +65,21 @@ export class DeduplicationService {
       }
     }
 
+    if (item.externalId) {
+      const crossSourceExisting = await this.watchItemRepository.findOne({
+        where: {
+          externalId: item.externalId,
+        },
+        relations: {
+          source: true,
+        },
+      });
+
+      if (crossSourceExisting) {
+        return crossSourceExisting;
+      }
+    }
+
     return this.watchItemRepository.findOne({
       where: {
         fingerprint: item.fingerprint,

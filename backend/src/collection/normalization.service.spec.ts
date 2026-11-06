@@ -25,4 +25,23 @@ describe('NormalizationService - liens externes', () => {
     expect(item.title).toBe('Évaluation des champignons Pleurotus ostreatus et Pleurotus citrinopileatus');
     expect(item.summary).toBe('Résumé avec italique et gras.');
   });
+
+  it('unifie les URLs ISO multi-langues (/en/, /fr/, /cms/render/live/...) vers la même URL canonique', () => {
+    const enItem = service.normalize(source, {
+      title: 'ISO 11095:1996',
+      url: 'https://www.iso.org/cms/render/live/en/sites/isoorg/contents/data/standard/00/10/1060.html',
+    });
+    const frItem = service.normalize(source, {
+      title: 'ISO 11095:1996',
+      url: 'https://www.iso.org/cms/render/live/fr/sites/isoorg/contents/data/standard/00/10/1060.html',
+    });
+    const publicFrItem = service.normalize(source, {
+      title: 'ISO 11095:1996',
+      url: 'https://www.iso.org/fr/standard/1060.html',
+    });
+
+    expect(enItem.canonicalUrl).toBe('https://www.iso.org/standard/1060.html');
+    expect(frItem.canonicalUrl).toBe('https://www.iso.org/standard/1060.html');
+    expect(publicFrItem.canonicalUrl).toBe('https://www.iso.org/standard/1060.html');
+  });
 });

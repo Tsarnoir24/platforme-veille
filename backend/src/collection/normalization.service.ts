@@ -109,6 +109,21 @@ export class NormalizationService {
 
       url.hash = '';
 
+      // Normalisation des URLs multi-langues ISO pour éviter les doublons entre flux (/en/, /fr/, etc.)
+      if (/(^|\.)iso\.org$/i.test(url.hostname)) {
+        url.pathname = url.pathname
+          .replace(
+            /^\/cms\/render\/live\/[a-z]{2}\/sites\/isoorg\/contents\/data\/standard\/\d+\/\d+\/(\d+)\.html$/i,
+            '/standard/$1.html',
+          )
+          .replace(
+            /^\/cms\/render\/live\/[a-z]{2}\/sites\/isoorg\/contents\/data\/committee\/\d+\/\d+\/(\d+)\.html$/i,
+            '/committee/$1.html',
+          )
+          .replace(/^\/[a-z]{2}\/(standard|committee)\/(\d+\.html)$/i, '/$1/$2')
+          .replace(/^\/[a-z]{2}\/(contents\/data\/.+)$/i, '/$1');
+      }
+
       return url.toString().replace(/\/$/, '');
     } catch {
       return null;

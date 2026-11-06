@@ -99,7 +99,11 @@ export class WatchItemsService implements OnModuleInit {
 
   async isUnchanged(normalized: NormalizedWatchItem): Promise<boolean> {
     const existing = await this.deduplicationService.findExisting(normalized);
-    if (existing?.fingerprint !== normalized.fingerprint) return false;
+    if (!existing) return false;
+    if (existing.source && existing.source.id !== normalized.sourceId) {
+      return true;
+    }
+    if (existing.fingerprint !== normalized.fingerprint) return false;
     return Boolean(existing.originalTitle) &&
       (!normalized.summary || Boolean(existing.originalSummary));
   }
@@ -150,6 +154,10 @@ export class WatchItemsService implements OnModuleInit {
       await this.createVersion(saved, normalized);
       this.aiAnalysis.scheduleAutomaticAnalysis(saved.id);
       return 'CREE';
+    }
+
+    if (existing.source && existing.source.id !== source.id) {
+      return 'DOUBLON';
     }
 
     if (existing.fingerprint === normalized.fingerprint) {
