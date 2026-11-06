@@ -862,6 +862,7 @@ onMounted(() => {
                             <label for="edit-source-frequency" class="mb-2 block">Fréquence</label>
                             <InputText id="edit-source-frequency" v-model="editForm.frequency" class="w-full"
                                 placeholder="Ex. : 30m, 6h ou 1j" :disabled="editSubmitting" />
+                            <p class="mt-1 text-xs text-slate-500">m : minutes · h : heures · j : jours</p>
                         </div>
                     </div>
 

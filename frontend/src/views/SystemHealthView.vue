@@ -1298,8 +1298,10 @@ onMounted(
                                 Fréquence
                             </label>
 
-                            <InputText v-model="editForm.frequency
-                                " class="w-full" />
+                            <InputText v-model="editForm.frequency" class="w-full" placeholder="Ex. : 30m, 6h ou 1j" />
+                            <p class="mt-1 text-xs text-slate-500">
+                                m : minutes · h : heures · j : jours
+                            </p>
                         </div>
 
                     </div>
