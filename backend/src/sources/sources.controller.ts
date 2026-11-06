@@ -15,6 +15,8 @@ import { SourcesService } from './sources.service';
 import { CreateSourceDto } from './dto/create-source.dto';
 import { UpdateSourceDto } from './dto/update-source.dto';
 import { UpdateSourceStatusDto } from './dto/update-source-status.dto';
+import { DiscoverSourceDto } from './dto/discover-source.dto';
+import { UrlDiscoveryService } from './url-discovery.service';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -23,7 +25,16 @@ import { Roles } from '../auth/decorators/roles.decorator';
 @Controller('api/v1/sources')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class SourcesController {
-  constructor(private readonly sourcesService: SourcesService) {}
+  constructor(
+    private readonly sourcesService: SourcesService,
+    private readonly urlDiscoveryService: UrlDiscoveryService,
+  ) {}
+
+  @Post('discover')
+  @Roles('ADMIN', 'RESPONSABLE_VEILLE', 'OPERATEUR_VEILLE')
+  discover(@Body() dto: DiscoverSourceDto) {
+    return this.urlDiscoveryService.resolveSourceUrl(dto.url);
+  }
 
   @Get()
   @Roles('ADMIN', 'RESPONSABLE_VEILLE', 'OPERATEUR_VEILLE')

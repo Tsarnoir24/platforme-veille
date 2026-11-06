@@ -6,6 +6,7 @@ import { Source } from './entities/source.entity';
 
 import { SourcesController } from './sources.controller';
 import { SourcesService } from './sources.service';
+import { UrlDiscoveryService } from './url-discovery.service';
 import { AuditModule } from '../audit/audit.module';
 import { ConnectorsModule } from '../connectors/connectors.module';
 import { CollectionModule } from '../collection/collection.module';
@@ -21,8 +22,8 @@ import { CollectionModule } from '../collection/collection.module';
 
   controllers: [SourcesController],
 
-  providers: [SourcesService],
+  providers: [SourcesService, UrlDiscoveryService],
 
-  exports: [SourcesService, TypeOrmModule],
+  exports: [SourcesService, UrlDiscoveryService, TypeOrmModule],
 })
 export class SourcesModule {}

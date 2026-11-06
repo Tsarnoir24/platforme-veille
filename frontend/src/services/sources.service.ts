@@ -55,6 +55,23 @@ export interface CreateSourcePayload {
   active?: boolean;
 }
 
+export interface DiscoveredSourceResult {
+  originalUrl: string;
+  resolvedUrl: string;
+  detectedType: 'RSS' | 'ATOM' | 'API';
+  resolutionMethod: 'PATTERN_MATCH' | 'DIRECT_FEED' | 'DOM_AUTODISCOVERY' | 'HTML_EXTRACTION';
+  suggestedTitle?: string;
+  suggestedOrganization?: string;
+  suggestedCountry?: string;
+  suggestedCategory?: string;
+  suggestedFrequency?: string;
+  message: string;
+}
+
+export function discoverSourceUrl(url: string) {
+  return api.post<DiscoveredSourceResult>("/sources/discover", { url });
+}
+
 export function getSources() {
   return api.get<Source[]>("/sources");
 }

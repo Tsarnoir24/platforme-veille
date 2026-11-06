@@ -39,6 +39,8 @@ import { statusSeverity } from '../utils/status-severity';
 
 import {
     createSource,
+    discoverSourceUrl,
+    type DiscoveredSourceResult,
     createConnector,
     updateSource,
     updateSourceStatus,
@@ -127,6 +129,55 @@ watch(sourceSearch, () => {
 });
 
 const dialogVisible = ref(false);
+const creationMode = ref<'DIRECT' | 'WEB_PAGE'>('DIRECT');
+const webPageUrl = ref('');
+const analyzingWebUrl = ref(false);
+const discoveredInfo = ref<DiscoveredSourceResult | null>(null);
+
+function switchCreationMode(mode: 'DIRECT' | 'WEB_PAGE') {
+    creationMode.value = mode;
+    error.value = '';
+    if (mode === 'WEB_PAGE') {
+        if (!form.value.sourceType || form.value.sourceType === 'IMPORT_MANUEL') {
+            form.value.sourceType = 'RSS';
+        }
+        if (!form.value.frequency) {
+            form.value.frequency = '6h';
+        }
+    }
+}
+
+async function analyzeWebPageUrl() {
+    const raw = webPageUrl.value.trim();
+    if (!raw || analyzingWebUrl.value) return;
+    analyzingWebUrl.value = true;
+    error.value = '';
+    try {
+        const { data } = await discoverSourceUrl(raw);
+        discoveredInfo.value = data;
+        form.value.baseUrl = data.resolvedUrl;
+        form.value.sourceType = data.detectedType;
+        if (data.suggestedTitle && !form.value.name.trim()) {
+            form.value.name = data.suggestedTitle;
+        }
+        if (data.suggestedOrganization && !form.value.organization.trim()) {
+            form.value.organization = data.suggestedOrganization;
+        }
+        if (data.suggestedCountry && !form.value.country.trim()) {
+            form.value.country = data.suggestedCountry;
+        }
+        if (data.suggestedCategory && !form.value.category) {
+            form.value.category = data.suggestedCategory;
+        }
+        if (data.suggestedFrequency && !form.value.frequency.trim()) {
+            form.value.frequency = data.suggestedFrequency;
+        }
+    } catch (cause) {
+        error.value = errorMessage(cause);
+    } finally {
+        analyzingWebUrl.value = false;
+    }
+}
 const error = ref('');
 const statusError = ref('');
 const changingStatus = ref<number[]>([]);
@@ -453,6 +504,14 @@ async function loadFeedItems() {
 
 async function submit() {
     if (!canCreateSource.value || submitting.value) return;
+    if (creationMode.value === 'WEB_PAGE') {
+        if (!form.value.baseUrl.trim() && webPageUrl.value.trim()) {
+            form.value.baseUrl = webPageUrl.value.trim();
+        }
+        if (!form.value.sourceType || form.value.sourceType === 'IMPORT_MANUEL') {
+            form.value.sourceType = 'RSS';
+        }
+    }
     if (form.value.sourceType === 'IMPORT_MANUEL' && !newSourceFile.value) {
         error.value = 'Sélectionnez un fichier CSV, XLSX ou PDF pour lancer l’import immédiatement.';
         return;
@@ -476,6 +535,9 @@ async function submit() {
 
         dialogVisible.value = false;
         crossrefQuery.value = '';
+        webPageUrl.value = '';
+        discoveredInfo.value = null;
+        creationMode.value = 'DIRECT';
         newSourceFile.value = null;
         if (newSourceImportInput.value) newSourceImportInput.value.value = '';
 
@@ -919,116 +981,212 @@ onMounted(() => {
                 </form>
             </Dialog>
 
-            <Dialog v-if="canCreateSource" v-model:visible="dialogVisible
-                " modal header="Nouvelle source" class="w-full max-w-2xl" :closable="!submitting" :close-on-escape="!submitting">
+            <Dialog v-if="canCreateSource" v-model:visible="dialogVisible" modal header="Nouvelle source" class="w-full max-w-2xl" :closable="!submitting" :close-on-escape="!submitting">
                 <form class="space-y-4" @submit.prevent="submit">
+                    <div class="source-mode-segmented" role="tablist" aria-label="Mode d'ajout de source">
+                        <button
+                            type="button"
+                            class="source-mode-btn"
+                            :class="{ active: creationMode === 'DIRECT' }"
+                            @click="switchCreationMode('DIRECT')"
+                        >
+                            Flux RSS / Atom, API et Import manuel
+                        </button>
+                        <button
+                            type="button"
+                            class="source-mode-btn"
+                            :class="{ active: creationMode === 'WEB_PAGE' }"
+                            @click="switchCreationMode('WEB_PAGE')"
+                        >
+                            Lien de page web (auto-détection HTML)
+                        </button>
+                    </div>
+
                     <Message v-if="error" severity="error">
                         {{ error }}
                     </Message>
 
-                    <div class="grid gap-4 md:grid-cols-2">
+                    <template v-if="creationMode === 'WEB_PAGE'">
                         <div>
                             <label class="required-label mb-2 block">
-                                Nom
+                                Lien de la page web à surveiller
                             </label>
-
-                            <InputText v-model="form.name" class="w-full" required />
+                            <div class="flex gap-2">
+                                <InputText
+                                    v-model="webPageUrl"
+                                    class="w-full"
+                                    placeholder="Ex. : https://www.iso.org/fr/standard/75100.html"
+                                    required
+                                    @blur="webPageUrl.trim() && !discoveredInfo && analyzeWebPageUrl()"
+                                />
+                                <Button
+                                    type="button"
+                                    label="Analyser le lien"
+                                    severity="secondary"
+                                    class="shrink-0"
+                                    :loading="analyzingWebUrl"
+                                    :disabled="!webPageUrl.trim() || analyzingWebUrl"
+                                    @click="analyzeWebPageUrl"
+                                />
+                            </div>
+                            <p class="mt-1 text-xs text-slate-500">
+                                Collez directement l’adresse depuis la barre de recherche du navigateur (ISO, ANSES, revue, page HTML statique…).
+                            </p>
                         </div>
 
-                        <div>
-                            <label class="mb-2 block">
-                                Organisme
-                            </label>
-
-                            <InputText v-model="form.organization
-                                " class="w-full" />
+                        <div v-if="discoveredInfo" class="discovered-feed-banner">
+                            <div class="discovered-feed-title">
+                                <CheckCircleIcon size="0.9rem" />
+                                <span>{{ discoveredInfo.message }}</span>
+                            </div>
+                            <div class="discovered-feed-url">
+                                {{ discoveredInfo.resolvedUrl }}
+                            </div>
                         </div>
 
-                        <div>
-                            <label class="mb-2 block">
-                                Pays
-                            </label>
-
-                            <InputText v-model="form.country
-                                " class="w-full" />
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div>
+                                <label class="required-label mb-2 block">Nom</label>
+                                <InputText v-model="form.name" class="w-full" required />
+                            </div>
+                            <div>
+                                <label class="mb-2 block">Organisme</label>
+                                <InputText v-model="form.organization" class="w-full" />
+                            </div>
                         </div>
 
-                        <div>
-                            <label class="required-label mb-2 block">
-                                Catégorie
-                            </label>
-
-                            <div class="select-host">
-                              <Select append-to="self" v-model="form.category
-                                " option-label="label" option-value="value" :options="optionsFr(categoryOptions)
-                                    " class="w-full" required />
+                        <div class="grid gap-4 md:grid-cols-3">
+                            <div>
+                                <label class="mb-2 block">Pays</label>
+                                <InputText v-model="form.country" class="w-full" />
+                            </div>
+                            <div>
+                                <label class="required-label mb-2 block">Catégorie</label>
+                                <div class="select-host">
+                                    <Select
+                                        append-to="self"
+                                        v-model="form.category"
+                                        option-label="label"
+                                        option-value="value"
+                                        :options="optionsFr(categoryOptions)"
+                                        class="w-full"
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label class="mb-2 block">Fréquence</label>
+                                <InputText v-model="form.frequency" class="w-full" placeholder="Ex. : 30m, 6h ou 1j" />
+                                <p class="mt-1 text-xs text-slate-500">m : minutes · h : heures · j : jours</p>
                             </div>
                         </div>
 
                         <div>
-                            <label class="required-label mb-2 block">
-                                Type
-                            </label>
+                            <label class="mb-2 block">Sujet à surveiller</label>
+                            <InputText
+                                v-model="crossrefQuery"
+                                class="w-full"
+                                placeholder="Ex. : environnement, ISO 17025, laboratoire, microbiologie"
+                            />
+                            <p class="mt-1 text-xs text-slate-500">
+                                Séparez les sujets par des virgules.
+                            </p>
+                        </div>
+                    </template>
 
-                            <div class="select-host">
-                              <Select append-to="self" v-model="form.sourceType
-                                " option-label="label" option-value="value" :options="optionsFr(sourceTypeOptions)
-                                    " class="w-full" required @update:model-value="applyManualSourceDefaults" @change="(event) => applyManualSourceDefaults(event.value)" />
+                    <template v-else>
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <div>
+                                <label class="required-label mb-2 block">
+                                    Nom
+                                </label>
+
+                                <InputText v-model="form.name" class="w-full" required />
+                            </div>
+
+                            <div>
+                                <label class="mb-2 block">
+                                    Organisme
+                                </label>
+
+                                <InputText v-model="form.organization" class="w-full" />
+                            </div>
+
+                            <div>
+                                <label class="mb-2 block">
+                                    Pays
+                                </label>
+
+                                <InputText v-model="form.country" class="w-full" />
+                            </div>
+
+                            <div>
+                                <label class="required-label mb-2 block">
+                                    Catégorie
+                                </label>
+
+                                <div class="select-host">
+                                  <Select append-to="self" v-model="form.category" option-label="label" option-value="value" :options="optionsFr(categoryOptions)" class="w-full" required />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="required-label mb-2 block">
+                                    Type
+                                </label>
+
+                                <div class="select-host">
+                                  <Select append-to="self" v-model="form.sourceType" option-label="label" option-value="value" :options="optionsFr(sourceTypeOptions)" class="w-full" required @update:model-value="applyManualSourceDefaults" @change="(event) => applyManualSourceDefaults(event.value)" />
+                                </div>
+                            </div>
+
+                            <div v-if="form.sourceType !== 'IMPORT_MANUEL'">
+                                <label class="mb-2 block">
+                                    Fréquence
+                                </label>
+
+                                <InputText v-model="form.frequency" class="w-full" placeholder="Ex. : 30m, 6h ou 1j" />
+                                <p class="mt-1 text-sm text-slate-500">m : minutes · h : heures · j : jours</p>
                             </div>
                         </div>
 
                         <div v-if="form.sourceType !== 'IMPORT_MANUEL'">
-                            <label class="mb-2 block">
-                                Fréquence
+                            <label class="required-label mb-2 block">
+                                Adresse de la source
                             </label>
 
-                            <InputText v-model="form.frequency
-                                " class="w-full" placeholder="Ex. : 30m, 6h ou 1j" />
-                            <p class="mt-1 text-sm text-slate-500">m : minutes · h : heures · j : jours</p>
+                            <InputText v-model="form.baseUrl" class="w-full" placeholder="https://…" required />
+                            <p v-if="form.sourceType === 'API'" class="mt-1 text-sm text-slate-500">
+                                Crossref est pris en charge. Pour une autre API publique, utilisez son URL directe JSON avec une liste d’articles ; une page HTML ne convient pas.
+                            </p>
                         </div>
-                    </div>
 
-                    <div v-if="form.sourceType !== 'IMPORT_MANUEL'">
-                        <label class="required-label mb-2 block">
-                            Adresse de la source
-                        </label>
-
-                        <InputText v-model="form.baseUrl
-                            " class="w-full" placeholder="https://…"
-                            required />
-                        <p v-if="form.sourceType === 'API'" class="mt-1 text-sm text-slate-500">
-                            Crossref est pris en charge. Pour une autre API publique, utilisez son URL directe JSON avec une liste d’articles ; une page HTML ne convient pas.
+                        <p v-if="['RSS', 'ATOM'].includes(form.sourceType)" class="text-sm text-slate-500">
+                            Utilisez l’adresse du flux, pas celle de la page d’accueil. Une première collecte sera lancée après la création.
                         </p>
-                    </div>
-
-                    <p v-if="['RSS', 'ATOM'].includes(form.sourceType)" class="text-sm text-slate-500">
-                        Utilisez l’adresse du flux, pas celle de la page d’accueil. Une première collecte sera lancée après la création.
-                    </p>
-                    <div v-if="form.sourceType === 'API'">
-                        <p class="mb-2 text-sm text-slate-500">Les API publiques qui renvoient une liste JSON d’articles sont prises en charge. Les API nécessitant une clé ou une configuration spéciale ne le sont pas encore. Une première collecte sera lancée après la création.</p>
-                        <label for="source-query" class="mb-2 block">Sujet à surveiller</label>
-                        <InputText id="source-query" v-model="crossrefQuery" class="w-full" placeholder="Ex. : environnement, ISO 17025, laboratoire" />
-                        <p class="mt-1 text-sm text-slate-500">
-                            Séparez les sujets par des virgules. Une expression de plusieurs mots ne nécessite pas de guillemets.
-                        </p>
-                    </div>
-                    <div v-if="form.sourceType === 'IMPORT_MANUEL'" class="space-y-2">
-                        <Message severity="info">
-                            Le fichier sélectionné sera importé immédiatement après la création de la source.
-                        </Message>
-                        <label for="new-source-import-file" class="required-label mb-2 block">Fichier à importer</label>
-                        <input id="new-source-import-file" ref="newSourceImportInput" type="file" required
-                            accept=".pdf,.csv,.xlsx,application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                            class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                            @change="selectNewSourceFile" />
-                        <p class="text-xs text-slate-500">CSV, XLSX ou PDF · 5 Mo maximum.</p>
-                    </div>
+                        <div v-if="form.sourceType !== 'IMPORT_MANUEL'">
+                            <p v-if="form.sourceType === 'API'" class="mb-2 text-sm text-slate-500">Les API publiques qui renvoient une liste JSON d’articles sont prises en charge. Les API nécessitant une clé ou une configuration spéciale ne le sont pas encore. Une première collecte sera lancée après la création.</p>
+                            <label for="source-query" class="mb-2 block">Sujet à surveiller</label>
+                            <InputText id="source-query" v-model="crossrefQuery" class="w-full" placeholder="Ex. : environnement, ISO 17025, laboratoire" />
+                            <p class="mt-1 text-sm text-slate-500">
+                                Séparez les sujets par des virgules. Une expression de plusieurs mots ne nécessite pas de guillemets.
+                            </p>
+                        </div>
+                        <div v-if="form.sourceType === 'IMPORT_MANUEL'" class="space-y-2">
+                            <Message severity="info">
+                                Le fichier sélectionné sera importé immédiatement après la création de la source.
+                            </Message>
+                            <label for="new-source-import-file" class="required-label mb-2 block">Fichier à importer</label>
+                            <input id="new-source-import-file" ref="newSourceImportInput" type="file" required
+                                accept=".pdf,.csv,.xlsx,application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                                class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                                @change="selectNewSourceFile" />
+                            <p class="text-xs text-slate-500">CSV, XLSX ou PDF · 5 Mo maximum.</p>
+                        </div>
+                    </template>
 
                     <div class="flex justify-end gap-3">
-                        <Button type="button" label="Annuler" severity="secondary" :disabled="submitting" @click="
-                            dialogVisible = false
-                            " />
-
+                        <Button type="button" label="Annuler" severity="secondary" :disabled="submitting" @click="dialogVisible = false" />
                         <Button type="submit" label="Créer la source" :loading="submitting" :disabled="submitting" />
                     </div>
                 </form>
@@ -1038,6 +1196,58 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.source-mode-segmented {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+    padding: 0.3rem;
+    border-radius: 0.65rem;
+    border: 1px solid var(--app-border);
+    background: rgba(15, 23, 42, 0.55);
+}
+
+.source-mode-btn {
+    padding: 0.55rem 0.75rem;
+    border-radius: 0.45rem;
+    border: none;
+    background: transparent;
+    color: var(--app-text-muted);
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.source-mode-btn.active {
+    background: var(--app-primary, #10b981);
+    color: #042f2e;
+    font-weight: 700;
+}
+
+.discovered-feed-banner {
+    padding: 0.7rem 0.9rem;
+    border-radius: 0.55rem;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    background: rgba(16, 185, 129, 0.1);
+    display: grid;
+    gap: 0.25rem;
+}
+
+.discovered-feed-title {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: #34d399;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.discovered-feed-url {
+    color: #6ee7b7;
+    font-size: 0.74rem;
+    word-break: break-all;
+}
+
 .source-actions {
     display: flex;
     align-items: center;

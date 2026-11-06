@@ -14,6 +14,7 @@ import { UpdateSourceDto } from './dto/update-source.dto';
 import { AuditService } from '../audit/audit.service';
 import { ConnectorsService } from '../connectors/connectors.service';
 import { CollectionService } from '../collection/collection.service';
+import { UrlDiscoveryService } from './url-discovery.service';
 
 export interface InitialCollectionResult {
   status:
@@ -40,22 +41,47 @@ export class SourcesService {
     private readonly auditService: AuditService,
     private readonly connectorsService: ConnectorsService,
     private readonly collectionService: CollectionService,
+    private readonly urlDiscoveryService: UrlDiscoveryService,
   ) {}
 
   async create(dto: CreateSourceDto, actorId?: number) {
-    const config = dto.sourceType === 'IMPORT_MANUEL'
+    let effectiveDto = { ...dto };
+    if (effectiveDto.sourceType !== 'IMPORT_MANUEL' && effectiveDto.baseUrl) {
+      try {
+        const discovered = await this.urlDiscoveryService.resolveSourceUrl(
+          effectiveDto.baseUrl,
+        );
+        if (discovered.resolvedUrl) {
+          effectiveDto.baseUrl = discovered.resolvedUrl;
+        }
+        if (
+          discovered.resolutionMethod === 'PATTERN_MATCH' ||
+          discovered.resolutionMethod === 'DOM_AUTODISCOVERY'
+        ) {
+          effectiveDto.sourceType = discovered.detectedType;
+        }
+      } catch (err) {
+        this.logger.warn(
+          `Auto-découverte ignorée lors de la création de source : ${
+            err instanceof Error ? err.message : err
+          }`,
+        );
+      }
+    }
+
+    const config = effectiveDto.sourceType === 'IMPORT_MANUEL'
       ? undefined
-      : this.connectorConfig(dto);
+      : this.connectorConfig(effectiveDto);
 
     const source = this.sourceRepository.create({
-      name: dto.name,
-      organization: dto.organization ?? null,
-      country: dto.country ?? null,
-      category: dto.category,
-      sourceType: dto.sourceType,
-      baseUrl: dto.baseUrl ?? null,
-      frequency: dto.frequency ?? null,
-      active: dto.active ?? true,
+      name: effectiveDto.name,
+      organization: effectiveDto.organization ?? null,
+      country: effectiveDto.country ?? null,
+      category: effectiveDto.category,
+      sourceType: effectiveDto.sourceType,
+      baseUrl: effectiveDto.baseUrl ?? null,
+      frequency: effectiveDto.frequency ?? null,
+      active: effectiveDto.active ?? true,
     });
 
     const saved = await this.sourceRepository.save(source);

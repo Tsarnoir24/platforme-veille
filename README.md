@@ -48,6 +48,7 @@ Ce README permet de **recréer et lancer le projet complet de A à Z à partir d
 - @nestjs/throttler
 - Helmet
 - rss-parser
+- Cheerio (auto-découverte de flux dans le DOM HTML et extraction de pages web statiques)
 - ExcelJS
 - PDFKit
 - Nodemailer
@@ -75,8 +76,8 @@ La plateforme comprend notamment :
 
 - authentification ;
 - gestion des utilisateurs et des rôles ;
-- création et administration des sources ;
-- connecteurs RSS / Atom ;
+- création et administration des sources (mode direct **Flux RSS / Atom, API et Import manuel** ou mode **Lien de page web avec auto-détection HTML via Cheerio**) ;
+- connecteurs RSS / Atom et extraction automatique de pages HTML statiques (JSON-LD, `<article>`, OpenGraph) ;
 - API Crossref et autres API JSON compatibles ;
 - import manuel CSV / XLSX / PDF ;
 - collecte manuelle et automatique ;
@@ -631,6 +632,17 @@ la collecte échoue, corriger la configuration de la source et la relancer depui
 Le test du connecteur reste disponible dans **Administration et santé des sources** pour
 vérifier une configuration sans lancer une collecte.
 
+### Auto-découverte à partir d’un lien de page web (Cheerio)
+
+Dans la fenêtre **Nouvelle source**, un sélecteur en haut de la modale propose deux modes :
+
+1. **Flux RSS / Atom, API et Import manuel** (configuration directe du flux ou téléversement d’un fichier).
+2. **Lien de page web (auto-détection HTML)** : l’utilisateur colle directement l’adresse affichée dans la barre de recherche du navigateur (par exemple `https://www.iso.org/fr/standard/75100.html` ou une rubrique d’actualités ANSES / EFSA) et clique sur **Analyser le lien** (`POST /api/v1/sources/discover`). Le service `UrlDiscoveryService` exécute un pipeline en 4 niveaux :
+   - **Règles métiers par domaine (Pattern Matching)** : conversion automatique des fiches de normes et comités ISO en flux `.rss` officiels (`.../07/51/75100.detail.rss`), pré-remplissage de l’organisme, du pays et de la catégorie.
+   - **Inspection HTTP sécurisée (`safeGet`)** : détection directe des flux XML (`RSS` / `ATOM`) et `JSON`.
+   - **Auto-découverte DOM via Cheerio** : recherche des balises `<link rel="alternate" type="application/rss+xml">` ou `application/atom+xml` et extraction du titre de la page (`<title>`, `og:title`, `og:site_name`).
+   - **Extraction directe de pages HTML statiques via Cheerio** : si la page ne possède aucun flux RSS/Atom externe, `RssConnector` analyse directement le DOM HTML (données structurées `JSON-LD`, blocs `<article>` et balises `OpenGraph`) lors de la collecte.
+
 ---
 
 ## 22. Tester Crossref
@@ -942,6 +954,7 @@ Depuis la page de récupération, le lien de retour ouvre la connexion dans l’
 |---|---|---|
 | GET | `/api/v1/sources` | Sources |
 | POST | `/api/v1/sources` | Créer une source |
+| POST | `/api/v1/sources/discover` | Auto-découvrir et convertir un lien de page web HTML en flux RSS/Atom/API (Cheerio) |
 | PATCH | `/api/v1/sources/:id` | Modifier |
 | PATCH | `/api/v1/sources/:id/status` | Activer/désactiver |
 | GET | `/api/v1/connectors` | Connecteurs |
