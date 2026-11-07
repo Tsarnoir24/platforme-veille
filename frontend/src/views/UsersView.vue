@@ -1230,15 +1230,15 @@ onMounted(
 }
 
 .password-weak .password-meter span {
-  background: #f87171;
+  background: var(--app-danger);
 }
 
 .password-medium .password-meter span {
-  background: #fbbf24;
+  background: var(--app-warning);
 }
 
 .password-strong .password-meter span {
-  background: #34d399;
+  background: var(--app-primary);
 }
 
 .password-empty .password-meter span {
@@ -1246,15 +1246,15 @@ onMounted(
 }
 
 .password-weak .password-strength-head strong {
-  color: #fca5a5;
+  color: var(--app-danger);
 }
 
 .password-medium .password-strength-head strong {
-  color: #fde68a;
+  color: var(--app-warning);
 }
 
 .password-strong .password-strength-head strong {
-  color: #6ee7b7;
+  color: var(--app-primary);
 }
 
 .password-rules {
@@ -1275,7 +1275,7 @@ onMounted(
 }
 
 .password-rules li.valid {
-  color: #6ee7b7;
+  color: var(--app-primary);
 }
 
 @media (max-width: 640px) {

@@ -520,7 +520,8 @@ onBeforeUnmount(() => {
 
 
 
-      <nav ref="sidebarMenu" class="sidebar-menu" @scroll.passive="saveSidebarScroll" @click.capture="rememberSidebarScroll">
+      <nav ref="sidebarMenu" class="sidebar-menu" @scroll.passive="saveSidebarScroll"
+        @click.capture="rememberSidebarScroll">
 
         <RouterLink to="/" class="sidebar-item" exact-active-class="sidebar-item-active" @click="
           closeMobileMenu
@@ -536,14 +537,14 @@ onBeforeUnmount(() => {
         <RouterLink v-if="
           canViewWatchItems
         " to="/watch-items" class="sidebar-item" :class="{
-            'sidebar-item-active':
-              route.path ===
-              '/watch-items'
-              &&
-              route.query
-                .favorites !==
-              '1',
-          }" @click="
+          'sidebar-item-active':
+            route.path ===
+            '/watch-items'
+            &&
+            route.query
+              .favorites !==
+            '1',
+        }" @click="
             closeMobileMenu
           ">
           <BookIcon size="1.1rem" />
@@ -559,14 +560,14 @@ onBeforeUnmount(() => {
           &&
           hasFavorites
         " :to="{
-            path:
-              '/watch-items',
+          path:
+            '/watch-items',
 
-            query: {
-              favorites:
-                '1',
-            },
-          }" class="sidebar-item" :class="{
+          query: {
+            favorites:
+              '1',
+          },
+        }" class="sidebar-item" :class="{
             'sidebar-item-active':
               route.path ===
               '/watch-items'
@@ -588,8 +589,8 @@ onBeforeUnmount(() => {
         <RouterLink v-if="
           canSeeActions
         " to="/actions" class="sidebar-item" active-class="sidebar-item-active" @click="
-            closeMobileMenu
-          ">
+          closeMobileMenu
+        ">
           <CheckSquareIcon size="1.1rem" />
 
           <span>
@@ -611,8 +612,8 @@ onBeforeUnmount(() => {
         <RouterLink v-if="
           canSeeReports
         " to="/reports" class="sidebar-item" active-class="sidebar-item-active" @click="
-            closeMobileMenu
-          ">
+          closeMobileMenu
+        ">
           <ChartBarIcon size="1.1rem" />
 
           <span>
@@ -642,8 +643,8 @@ onBeforeUnmount(() => {
         <RouterLink v-if="
           auth.isAdmin
         " to="/taxonomy" class="sidebar-item" active-class="sidebar-item-active" @click="
-            closeMobileMenu
-          ">
+          closeMobileMenu
+        ">
           <SitemapIcon size="1.1rem" />
 
           <span>
@@ -655,8 +656,8 @@ onBeforeUnmount(() => {
         <RouterLink v-if="
           auth.isAdmin
         " to="/users" class="sidebar-item" active-class="sidebar-item-active" @click="
-            closeMobileMenu
-          ">
+          closeMobileMenu
+        ">
           <UsersIcon size="1.1rem" />
 
           <span>
@@ -668,8 +669,8 @@ onBeforeUnmount(() => {
         <RouterLink v-if="
           canSeeReports
         " to="/audit" class="sidebar-item" active-class="sidebar-item-active" @click="
-            closeMobileMenu
-          ">
+          closeMobileMenu
+        ">
           <HistoryIcon size="1.1rem" />
 
           <span>
@@ -712,8 +713,8 @@ onBeforeUnmount(() => {
     <button v-if="
       mobileMenuOpen
     " type="button" class="sidebar-overlay" aria-label="Fermer le menu" @click="
-        closeMobileMenu
-      " />
+      closeMobileMenu
+    " />
 
 
 
@@ -723,10 +724,12 @@ onBeforeUnmount(() => {
       <header class="topbar">
 
         <div class="topbar-left">
-          <button type="button" class="mobile-menu" :aria-label="mobileMenuOpen ? 'Replier le menu' : 'Ouvrir le menu des modules'" :aria-expanded="mobileMenuOpen" aria-controls="module-navigation" @click="
-            mobileMenuOpen =
-            !mobileMenuOpen
-            ">
+          <button type="button" class="mobile-menu"
+            :aria-label="mobileMenuOpen ? 'Replier le menu' : 'Ouvrir le menu des modules'"
+            :aria-expanded="mobileMenuOpen" aria-controls="module-navigation" @click="
+              mobileMenuOpen =
+              !mobileMenuOpen
+              ">
             <BarsIcon size="1rem" />
           </button>
 
@@ -746,7 +749,8 @@ onBeforeUnmount(() => {
 
           <button type="button" class="notification-button" :class="{
             'notification-button-active': notificationDrawerOpen,
-          }" title="Notifications" aria-label="Ouvrir les notifications" :aria-expanded="notificationDrawerOpen" @click="notificationDrawerOpen = !notificationDrawerOpen">
+          }" title="Notifications" aria-label="Ouvrir les notifications" :aria-expanded="notificationDrawerOpen"
+            @click="notificationDrawerOpen = !notificationDrawerOpen">
             <BellIcon size="1.05rem" />
 
             <span v-if="
@@ -930,7 +934,7 @@ onBeforeUnmount(() => {
   color: var(--app-primary);
 
   box-shadow:
-    inset 3px 0 #34d399;
+    inset 3px 0 var(--app-primary);
 }
 
 .sidebar-counter {
@@ -1134,18 +1138,18 @@ onBeforeUnmount(() => {
   place-items: center;
 
   border:
-    1px solid rgb(52 211 153 / 0.2);
+    1px solid var(--app-avatar-border);
 
   border-radius:
     999px;
 
   background:
     linear-gradient(135deg,
-      #064e3b,
-      #115e59);
+      var(--app-avatar-bg-start),
+      var(--app-avatar-bg-end));
 
   color:
-    #6ee7b7;
+    var(--app-avatar-text);
 
   font-size:
     0.78rem;
@@ -1233,14 +1237,47 @@ onBeforeUnmount(() => {
 }
 
 @media (min-width: 768px) {
-  .app-sidebar { transition: width 180ms ease; }
-  .app-body { transition: margin-left 180ms ease; }
-  .navigation-expanded .app-sidebar { width: 15rem; }
-  .navigation-expanded .app-body { margin-left: 15rem; }
-  .navigation-expanded .sidebar-brand { justify-content: flex-start; gap: 0.75rem; padding: 0 1rem; }
-  .navigation-expanded .brand-name { display: block; color: var(--app-text); font-weight: 800; }
-  .navigation-expanded .sidebar-item { flex-direction: row; justify-content: flex-start; min-height: 3.2rem; gap: 0.8rem; padding: 0 0.9rem; font-size: 0.8rem; }
-  .navigation-expanded .sidebar-counter { position: static; margin-left: auto; }
+  .app-sidebar {
+    transition: width 180ms ease;
+  }
+
+  .app-body {
+    transition: margin-left 180ms ease;
+  }
+
+  .navigation-expanded .app-sidebar {
+    width: 15rem;
+  }
+
+  .navigation-expanded .app-body {
+    margin-left: 15rem;
+  }
+
+  .navigation-expanded .sidebar-brand {
+    justify-content: flex-start;
+    gap: 0.75rem;
+    padding: 0 1rem;
+  }
+
+  .navigation-expanded .brand-name {
+    display: block;
+    color: var(--app-text);
+    font-weight: 800;
+  }
+
+  .navigation-expanded .sidebar-item {
+    flex-direction: row;
+    justify-content: flex-start;
+    min-height: 3.2rem;
+    gap: 0.8rem;
+    padding: 0 0.9rem;
+    font-size: 0.8rem;
+  }
+
+  .navigation-expanded .sidebar-counter {
+    position: static;
+    margin-left: auto;
+  }
 }
 
 @media (max-width: 767px) {

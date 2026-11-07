@@ -739,7 +739,7 @@ onMounted(
     0.7rem 0 0;
 
   color:
-    #fbbf24;
+    var(--app-warning);
 
   font-size:
     0.7rem;

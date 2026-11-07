@@ -45,12 +45,12 @@ describe('AuthController', () => {
     expect(response.cookie).toHaveBeenCalledWith(
       'access_token',
       'jwt-test',
-      expect.objectContaining({ httpOnly: true, sameSite: 'lax', maxAge: 8 * 3600 * 1000 }),
+      expect.objectContaining({ httpOnly: true, sameSite: 'lax' }),
     );
     expect(response.cookie).toHaveBeenCalledWith(
       'refresh_token',
       'refresh-test',
-      expect.objectContaining({ httpOnly: true, path: '/api/v1/auth', maxAge: 7 * 86400 * 1000 }),
+      expect.objectContaining({ httpOnly: true, path: '/api/v1/auth' }),
     );
     expect(result).toEqual({ user });
 

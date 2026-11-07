@@ -283,12 +283,12 @@ onBeforeUnmount(() => {
 
 .watch-icon {
   background: rgb(59 130 246 / .18);
-  color: #60a5fa;
+  color: var(--app-blue);
 }
 
 .action-icon {
   background: rgb(245 158 11 / .16);
-  color: #fbbf24;
+  color: var(--app-warning);
 }
 
 .item-copy {

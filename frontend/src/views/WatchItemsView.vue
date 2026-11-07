@@ -2401,8 +2401,8 @@ view in
   gap: 0.4rem;
   padding: 0.3rem;
   border-radius: 0.65rem;
-  border: 1px solid var(--app-border);
-  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid var(--app-border-strong);
+  background: var(--app-segmented-bg);
 }
 
 .source-mode-btn {
@@ -2410,24 +2410,29 @@ view in
   border-radius: 0.45rem;
   border: none;
   background: transparent;
-  color: var(--app-text-muted);
+  color: var(--app-segmented-btn-text);
   font-size: 0.76rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
+.source-mode-btn:hover:not(.active) {
+  background: var(--app-surface-3);
+  color: var(--app-text);
+}
+
 .source-mode-btn.active {
-  background: var(--app-primary, #10b981);
-  color: #042f2e;
+  background: var(--app-segmented-btn-active-bg);
+  color: var(--app-segmented-btn-active-text);
   font-weight: 700;
 }
 
 .discovered-feed-banner {
   padding: 0.7rem 0.9rem;
   border-radius: 0.55rem;
-  border: 1px solid rgba(16, 185, 129, 0.4);
-  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid var(--app-banner-success-border);
+  background: var(--app-banner-success-bg);
   display: grid;
   gap: 0.25rem;
 }
@@ -2436,13 +2441,13 @@ view in
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  color: #34d399;
+  color: var(--app-banner-success-title);
   font-size: 0.78rem;
   font-weight: 600;
 }
 
 .discovered-feed-url {
-  color: #6ee7b7;
+  color: var(--app-banner-success-text);
   font-size: 0.74rem;
   word-break: break-all;
 }

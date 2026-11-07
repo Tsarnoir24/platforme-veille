@@ -1,4 +1,4 @@
-import { ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import { ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
@@ -10,6 +10,11 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     context: ExecutionContext,
     status?: any,
   ): TUser {
+    const request = context.switchToHttp().getRequest();
+    if (request?.headers?.['x-tab-unauthenticated'] === '1') {
+      throw new UnauthorizedException('Veuillez vous connecter pour accéder à cette session.');
+    }
+
     const reqUser = super.handleRequest(err, user, info, context, status);
     if (!reqUser) return reqUser;
 

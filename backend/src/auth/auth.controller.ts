@@ -34,12 +34,10 @@ export class AuthController {
     };
     response.cookie('access_token', accessToken, {
       ...common,
-      maxAge: this.authService.accessTtlSeconds * 1000,
       path: '/',
     });
     response.cookie('refresh_token', refreshToken, {
       ...common,
-      maxAge: this.authService.refreshTtlSeconds * 1000,
       path: '/api/v1/auth',
     });
   }

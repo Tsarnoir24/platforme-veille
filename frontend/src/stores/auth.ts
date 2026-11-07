@@ -13,9 +13,13 @@ export interface CurrentUser {
 }
 
 const USER_CACHE_KEY = "veille_current_user";
+const TAB_SESSION_KEY = "veille_tab_authenticated";
 
 function readCachedUser(): CurrentUser | null {
   try {
+    if (sessionStorage.getItem(TAB_SESSION_KEY) !== "1") {
+      return null;
+    }
     const value = sessionStorage.getItem(USER_CACHE_KEY);
     if (!value) return null;
 
@@ -49,8 +53,10 @@ export const useAuthStore = defineStore("auth", () => {
   function setUser(value: CurrentUser | null) {
     user.value = value;
     if (value) {
+      sessionStorage.setItem(TAB_SESSION_KEY, "1");
       sessionStorage.setItem(USER_CACHE_KEY, JSON.stringify(value));
     } else {
+      sessionStorage.removeItem(TAB_SESSION_KEY);
       sessionStorage.removeItem(USER_CACHE_KEY);
     }
   }
@@ -76,6 +82,11 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   async function restoreSession() {
+    if (sessionStorage.getItem(TAB_SESSION_KEY) !== "1") {
+      setUser(null);
+      initialized.value = true;
+      return false;
+    }
     if (initialized.value) return isAuthenticated.value;
     try {
       const cachedUser = user.value;

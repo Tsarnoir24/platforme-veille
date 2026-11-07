@@ -46,6 +46,18 @@
   --app-background: var(--app-bg);
   --app-surface-muted: var(--app-surface-2);
   --app-surface-strong: var(--app-surface-3);
+  --app-segmented-bg: #0a1423;
+  --app-segmented-btn-text: #cbd5e1;
+  --app-segmented-btn-active-bg: var(--app-primary);
+  --app-segmented-btn-active-text: #042f2e;
+  --app-banner-success-border: rgb(16 185 129 / 0.4);
+  --app-banner-success-bg: rgb(16 185 129 / 0.12);
+  --app-banner-success-title: #34d399;
+  --app-banner-success-text: #6ee7b7;
+  --app-avatar-bg-start: #064e3b;
+  --app-avatar-bg-end: #115e59;
+  --app-avatar-text: #6ee7b7;
+  --app-avatar-border: rgb(52 211 153 / 0.2);
 
   --color-accent-turquoise: var(--app-primary);
   --color-accent-turquoise-hover: var(--app-primary-hover);
@@ -88,6 +100,18 @@
     --app-sidebar-start: #ffffff;
     --app-sidebar-end: #f2f7fb;
     --app-topbar: rgb(255 255 255 / 0.92);
+    --app-segmented-bg: #e2ecf5;
+    --app-segmented-btn-text: #334e68;
+    --app-segmented-btn-active-bg: #047857;
+    --app-segmented-btn-active-text: #ffffff;
+    --app-banner-success-border: rgb(4 120 87 / 0.35);
+    --app-banner-success-bg: #ecfdf5;
+    --app-banner-success-title: #047857;
+    --app-banner-success-text: #065f46;
+    --app-avatar-bg-start: #d1fae5;
+    --app-avatar-bg-end: #ccfbf1;
+    --app-avatar-text: #047857;
+    --app-avatar-border: rgb(4 120 87 / 0.25);
   }
 }
 
@@ -549,7 +573,7 @@ main .p-5 {
 .required-label::after {
   content: " *";
 
-  color: #f87171;
+  color: var(--app-danger);
 
   font-weight: 800;
 }
@@ -752,9 +776,9 @@ input[type="file"] ::file-selector-button {
 }
 
 .p-multiselect-option .p-checkbox-checked .p-checkbox-box {
-  border-color: #34d399 !important;
+  border-color: var(--app-primary) !important;
 
-  background: #34d399 !important;
+  background: var(--app-primary) !important;
 }
 
 

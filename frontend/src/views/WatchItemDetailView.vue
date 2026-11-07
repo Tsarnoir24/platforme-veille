@@ -2999,7 +2999,7 @@ onMounted(
 .original-link:hover {
     border-color: color-mix(in srgb, var(--app-blue) 45%, var(--app-border-strong));
     background: color-mix(in srgb, var(--app-blue) 10%, var(--app-surface-2));
-    color: #93c5fd;
+    color: var(--app-blue);
 }
 
 .summary-toggle:focus-visible,
