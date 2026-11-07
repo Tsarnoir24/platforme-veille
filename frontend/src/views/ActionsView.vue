@@ -780,7 +780,7 @@ onMounted(
         rgb(245 158 11 / 0.12);
 
     color:
-        #fbbf24;
+        var(--app-warning);
 }
 
 .stat-icon.progress {
@@ -788,7 +788,7 @@ onMounted(
         rgb(59 130 246 / 0.12);
 
     color:
-        #60a5fa;
+        var(--app-blue);
 }
 
 .stat-icon.done {
@@ -796,7 +796,7 @@ onMounted(
         rgb(16 185 129 / 0.12);
 
     color:
-        #34d399;
+        var(--app-primary);
 }
 
 .stat-icon.overdue {
@@ -804,7 +804,7 @@ onMounted(
         rgb(239 68 68 / 0.14);
 
     color:
-        #f87171;
+        var(--app-danger);
 }
 
 .due-date-cell {
@@ -866,7 +866,7 @@ onMounted(
 
 .watch-link:hover {
     color:
-        #93c5fd;
+        var(--app-primary);
 }
 
 .date-text,

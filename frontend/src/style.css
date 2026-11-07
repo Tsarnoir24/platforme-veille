@@ -14,8 +14,10 @@
   --app-border-strong: rgb(148 163 184 / 0.18);
 
   --app-text: #f8fafc;
+  --app-text-primary: var(--app-text);
   --app-text-secondary: #cbd5e1;
   --app-text-muted: #7f8ea3;
+  --text-color-secondary: var(--app-text-secondary);
 
   --app-primary: #34d399;
   --app-primary-hover: #6ee7b7;
@@ -58,6 +60,10 @@
   --app-avatar-bg-end: #115e59;
   --app-avatar-text: #6ee7b7;
   --app-avatar-border: rgb(52 211 153 / 0.2);
+  --app-banner-warn-border: rgb(245 158 11 / 0.38);
+  --app-banner-warn-bg: rgb(245 158 11 / 0.12);
+  --app-banner-warn-title: #fbbf24;
+  --app-banner-warn-text: #fde68a;
 
   --color-accent-turquoise: var(--app-primary);
   --color-accent-turquoise-hover: var(--app-primary-hover);
@@ -80,8 +86,10 @@
     --app-border: rgb(30 58 83 / 0.13);
     --app-border-strong: rgb(30 58 83 / 0.23);
     --app-text: #10243b;
+    --app-text-primary: var(--app-text);
     --app-text-secondary: #40566e;
     --app-text-muted: #60758d;
+    --text-color-secondary: var(--app-text-secondary);
     --app-primary: #047857;
     --app-primary-hover: #065f46;
     --app-primary-dark: #ffffff;
@@ -112,6 +120,10 @@
     --app-avatar-bg-end: #ccfbf1;
     --app-avatar-text: #047857;
     --app-avatar-border: rgb(4 120 87 / 0.25);
+    --app-banner-warn-border: #fcd34d;
+    --app-banner-warn-bg: #fffbeb;
+    --app-banner-warn-title: #92400e;
+    --app-banner-warn-text: #78350f;
   }
 }
 
@@ -196,32 +208,50 @@ main p {
 }
 
 .bg-slate-50,
-.bg-slate-100 {
+.bg-slate-100,
+.bg-gray-50,
+.bg-gray-100 {
   background: var(--app-surface-2) !important;
 }
 
-.bg-slate-200 {
+.bg-slate-200,
+.bg-slate-800,
+.bg-slate-900,
+.bg-gray-200 {
   background: var(--app-surface-3) !important;
 }
 
+.text-white,
+.text-slate-100,
 .text-slate-900,
-.text-slate-800 {
+.text-slate-800,
+.text-gray-900,
+.text-gray-800 {
   color: var(--app-text) !important;
 }
 
+.text-slate-200,
+.text-slate-300,
 .text-slate-700,
-.text-slate-600 {
+.text-slate-600,
+.text-gray-700,
+.text-gray-600 {
   color: var(--app-text-secondary) !important;
 }
 
 .text-slate-500,
-.text-slate-400 {
+.text-slate-400,
+.text-gray-500,
+.text-gray-400 {
   color: var(--app-text-muted) !important;
 }
 
 .border-slate-100,
 .border-slate-200,
-.border-slate-300 {
+.border-slate-300,
+.border-slate-600,
+.border-slate-700,
+.border-slate-800 {
   border-color: var(--app-border) !important;
 }
 

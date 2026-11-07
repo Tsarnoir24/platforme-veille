@@ -331,7 +331,7 @@ onBeforeUnmount(() => {
   flex: none;
   margin-top: .3rem;
   border-radius: 50%;
-  background: #fb7185;
+  background: var(--app-danger);
 }
 
 .drawer-footer {
@@ -357,7 +357,7 @@ onBeforeUnmount(() => {
 }
 
 .drawer-error {
-  color: #fb7185;
+  color: var(--app-danger);
   font-size: .75rem;
 }
 

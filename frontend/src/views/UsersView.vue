@@ -974,14 +974,14 @@ onMounted(
           </div>
 
 
-          <div class="p-3 bg-amber-50/70 rounded-lg border border-amber-200">
+          <div class="temp-pwd-option-banner">
             <div class="flex items-center gap-2">
               <Checkbox v-model="useAutoTemporaryPassword" inputId="auto-temp-pwd" :binary="true" />
-              <label for="auto-temp-pwd" class="text-sm font-semibold cursor-pointer text-slate-800">
+              <label for="auto-temp-pwd" class="text-sm font-semibold cursor-pointer">
                 Générer un mot de passe temporaire aléatoire (recommandé)
               </label>
             </div>
-            <p class="text-xs text-slate-600 mt-1 pl-6">
+            <p class="text-xs mt-1 pl-6">
               Le mot de passe sécurisé vous sera affiché dès la validation pour transmission. L’utilisateur sera forcé de le changer à sa première connexion.
             </p>
           </div>
@@ -1049,17 +1049,17 @@ onMounted(
     <!-- Dialog d'affichage du mot de passe temporaire -->
     <Dialog v-model:visible="tempPasswordDialogVisible" modal header="Mot de passe temporaire généré" class="w-full max-w-lg">
       <div class="space-y-4">
-        <div class="p-3 bg-amber-50 border border-amber-300 rounded-lg text-amber-900 text-sm">
+        <div class="temp-pwd-warn-banner">
           <p class="font-semibold flex items-center gap-1.5">
-            <i class="pi pi-shield text-amber-600"></i>
+            <i class="pi pi-shield"></i>
             Mot de passe à usage unique
           </p>
-          <p class="text-xs mt-1 text-amber-800">
+          <p class="text-xs mt-1">
             L'utilisateur sera <strong>obligé de choisir un nouveau mot de passe</strong> lors de sa première connexion avant d'accéder à l'application.
           </p>
         </div>
 
-        <div class="bg-slate-50 p-3 rounded border">
+        <div class="bg-slate-50 p-3 rounded border border-slate-200">
           <div class="text-xs text-slate-500 mb-1">Compte concerné :</div>
           <div class="font-semibold text-slate-900">{{ createdUserData?.name }}</div>
           <div class="text-xs text-slate-600 font-mono">{{ createdUserData?.email }}</div>
@@ -1284,17 +1284,38 @@ onMounted(
   }
 }
 
+.temp-pwd-option-banner,
+.temp-pwd-warn-banner {
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.65rem;
+  border: 1px solid var(--app-banner-warn-border);
+  background: var(--app-banner-warn-bg);
+  color: var(--app-banner-warn-text);
+  font-size: 0.85rem;
+}
+
+.temp-pwd-option-banner label,
+.temp-pwd-warn-banner p:first-child,
+.temp-pwd-warn-banner i {
+  color: var(--app-banner-warn-title);
+}
+
+.temp-pwd-option-banner p,
+.temp-pwd-warn-banner p:last-child {
+  color: var(--app-banner-warn-text);
+}
+
 .temp-pwd-box {
   display: block;
   flex: 1;
-  background: var(--app-surface-muted, #f8fafc);
-  border: 1px solid var(--app-border, #cbd5e1);
+  background: var(--app-surface-muted);
+  border: 1px solid var(--app-border);
   border-radius: 0.375rem;
   padding: 0.5rem 0.75rem;
   font-family: monospace;
   font-size: 1.15rem;
   font-weight: 700;
-  color: var(--app-primary, #1e40af);
+  color: var(--app-primary);
   letter-spacing: 0.05em;
   user-select: all;
   text-align: center;

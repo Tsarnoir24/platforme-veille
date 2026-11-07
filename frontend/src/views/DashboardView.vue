@@ -835,12 +835,12 @@ action in
 
 .urgent-card h3 i {
   color:
-    #f87171;
+    var(--app-danger);
 }
 
 .actions-card h3 i {
   color:
-    #fbbf24;
+    var(--app-warning);
 }
 
 .detail-card ol,
@@ -964,7 +964,7 @@ action in
     none;
 
   color:
-    #fbbf24;
+    var(--app-warning);
 
   font-weight:
     650;

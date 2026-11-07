@@ -1431,7 +1431,7 @@ onMounted(
 
                     <Column field="defaultQuery" header="Sujets à surveiller par défaut" style="min-width: 18rem">
                       <template #body="{ data }">
-                        <span class="text-sm text-slate-300">{{ data.defaultQuery || data.default_query || 'Aucun sujet configuré' }}</span>
+                        <span class="category-default-query">{{ data.defaultQuery || data.default_query || 'Aucun sujet configuré' }}</span>
                       </template>
                     </Column>
 
@@ -2284,12 +2284,15 @@ onMounted(
     0.35rem;
 }
 
-.secondary-text {
+.secondary-text,
+.category-default-query {
   color:
-    var(--app-text-muted);
+    var(--app-text-secondary);
 
   font-size:
-    0.72rem;
+    0.78rem;
+  line-height:
+    1.45;
 }
 
 .weight-cell,

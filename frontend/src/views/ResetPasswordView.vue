@@ -113,8 +113,8 @@ label { color: var(--app-text-secondary); font-size: .82rem; }
 .checklist-title { color: var(--app-text-secondary); font-weight: 600; }
 .password-checklist ul { display: grid; gap: .25rem; margin: 0; padding: 0; list-style: none; }
 .password-checklist li { display: flex; align-items: center; gap: .5rem; color: var(--app-text-muted); }
-.password-checklist li.met { color: #16a34a; font-weight: 500; }
-.text-danger { color: #dc2626; font-size: .78rem; }
+.password-checklist li.met { color: var(--app-primary); font-weight: 500; }
+.text-danger { color: var(--app-danger); font-size: .78rem; }
 a { color: var(--app-primary); font-size: .82rem; text-decoration: none; }
 a:hover { text-decoration: underline; }
 </style>

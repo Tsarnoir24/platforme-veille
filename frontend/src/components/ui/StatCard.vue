@@ -164,11 +164,11 @@ withDefaults(
 
 .trend-up {
   color:
-    #34d399;
+    var(--app-primary);
 }
 
 .trend-down {
   color:
-    #f87171;
+    var(--app-danger);
 }
 </style>

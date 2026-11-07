@@ -261,12 +261,12 @@ label {
 }
 
 .password-checklist li.met {
-  color: #16a34a;
+  color: var(--app-primary);
   font-weight: 500;
 }
 
 .text-danger {
-  color: #dc2626;
+  color: var(--app-danger);
   font-size: 0.78rem;
 }
 
@@ -276,14 +276,14 @@ label {
 
 .footer-action {
   text-align: center;
-  border-top: 1px solid var(--app-border, #f1f5f9);
+  border-top: 1px solid var(--app-border);
   padding-top: 1rem;
 }
 
 .logout-link {
   background: none;
   border: none;
-  color: var(--app-text-secondary, #64748b);
+  color: var(--app-text-secondary);
   font-size: 0.82rem;
   cursor: pointer;
   display: inline-flex;
@@ -291,7 +291,7 @@ label {
 }
 
 .logout-link:hover {
-  color: #dc2626;
+  color: var(--app-danger);
   text-decoration: underline;
 }
 </style>
