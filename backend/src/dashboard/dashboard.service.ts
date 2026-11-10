@@ -75,7 +75,7 @@ export class DashboardService {
           this.items.count({ where: { status: 'A_QUALIFIER', updatedAt: MoreThanOrEqual(periodStart) } }),
           this.items.count({ where: { criticality: 'CRITIQUE', updatedAt: MoreThanOrEqual(periodStart) } }),
           this.items.count({ where: { status: 'VALIDE', updatedAt: MoreThanOrEqual(periodStart) } }),
-          this.items.count({ where: { status: 'PUBLIE', publishedAt: MoreThanOrEqual(periodStart) } }),
+          this.items.count({ where: { status: 'PUBLIE', updatedAt: MoreThanOrEqual(periodStart) } }),
           this.actions.count({ where: { status: In(['OPEN', 'IN_PROGRESS']) } }),
           this.runs.count({
             where: {
@@ -137,9 +137,9 @@ export class DashboardService {
     if (user.roles.includes('REFERENT_LABORATOIRE')) {
       const [published, criticalPublished] =
         await Promise.all([
-          this.items.count({ where: { status: 'PUBLIE', publishedAt: MoreThanOrEqual(periodStart) } }),
+          this.items.count({ where: { status: 'PUBLIE' } }),
           this.items.count({
-            where: { status: 'PUBLIE', criticality: 'CRITIQUE', publishedAt: MoreThanOrEqual(periodStart) },
+            where: { status: 'PUBLIE', criticality: 'CRITIQUE' },
           }),
         ]);
 
@@ -147,14 +147,14 @@ export class DashboardService {
     }
 
     const [published, criticalPublished, recentlyPublished] = await Promise.all([
-      this.items.count({ where: { status: 'PUBLIE', publishedAt: MoreThanOrEqual(periodStart) } }),
+      this.items.count({ where: { status: 'PUBLIE' } }),
       this.items.count({
-        where: { status: 'PUBLIE', criticality: 'CRITIQUE', publishedAt: MoreThanOrEqual(periodStart) },
+        where: { status: 'PUBLIE', criticality: 'CRITIQUE' },
       }),
       this.items.count({
         where: {
           status: 'PUBLIE',
-          publishedAt: MoreThanOrEqual(periodStart),
+          updatedAt: MoreThanOrEqual(periodStart),
         },
       }),
     ]);
@@ -210,10 +210,10 @@ export class DashboardService {
       this.dataSource.query(
         `SELECT to_char(day, 'YYYY-MM-DD') AS date,
           COUNT(w.id) FILTER (WHERE w.collected_at >= day AND w.collected_at < day + INTERVAL '1 day')::int AS collected,
-          COUNT(w.id) FILTER (WHERE w.published_at >= day AND w.published_at < day + INTERVAL '1 day')::int AS published
+          COUNT(w.id) FILTER (WHERE w.status = 'PUBLIE' AND COALESCE(w.updated_at, w.published_at, w.collected_at) >= day AND COALESCE(w.updated_at, w.published_at, w.collected_at) < day + INTERVAL '1 day')::int AS published
         FROM generate_series(CURRENT_DATE - ($1::int - 1), CURRENT_DATE, INTERVAL '1 day') day
         LEFT JOIN watch_items w ON ((w.collected_at >= day AND w.collected_at < day + INTERVAL '1 day')
-          OR (w.published_at >= day AND w.published_at < day + INTERVAL '1 day')) ${publishedJoinClause}
+          OR (w.status = 'PUBLIE' AND COALESCE(w.updated_at, w.published_at, w.collected_at) >= day AND COALESCE(w.updated_at, w.published_at, w.collected_at) < day + INTERVAL '1 day')) ${publishedJoinClause}
         GROUP BY day ORDER BY day`, [days]),
       this.dataSource.query(
         `SELECT to_char(day, 'YYYY-MM-DD') AS date,

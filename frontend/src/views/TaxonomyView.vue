@@ -1101,7 +1101,7 @@ onMounted(
     <div class="taxonomy-page">
 
       <PageHeader title="Taxonomie"
-        subtitle="Gestion des thèmes, domaines, laboratoires et mots-clés utilisés pour qualifier la veille."
+        subtitle="Gestion des thèmes, domaines, laboratoires et mots-clés utilisés pour qualifier la veille ainsi que les catégories de veille."
         eyebrow="Administration" icon="pi pi-sitemap" />
 
 

@@ -22,7 +22,10 @@ async function runSeed() {
     { name: 'RESPONSABLE_VEILLE', description: 'Responsable veille / Qualité' },
     { name: 'REFERENT_LABORATOIRE', description: 'Référent laboratoire' },
     { name: 'LECTEUR', description: 'Lecteur' },
-    { name: 'OPERATEUR_VEILLE', description: 'Stagiaire / opérateur de veille' },
+    {
+      name: 'OPERATEUR_VEILLE',
+      description: 'Stagiaire / opérateur de veille',
+    },
   ];
 
   for (const roleData of roles) {
@@ -41,7 +44,9 @@ async function runSeed() {
   const rawPassword = process.env.SEED_ADMIN_PASSWORD;
 
   if (!email || !rawPassword) {
-    console.warn('[!] Attention : SEED_ADMIN_EMAIL ou SEED_ADMIN_PASSWORD non renseigné dans le fichier .env');
+    console.warn(
+      '[!] Attention : SEED_ADMIN_EMAIL ou SEED_ADMIN_PASSWORD non renseigné dans le fichier .env',
+    );
     await AppDataSource.destroy();
     return;
   }
@@ -84,7 +89,9 @@ async function runSeed() {
   );
 
   console.log(`[+] Compte administrateur initial créé avec succès : ${email}`);
-  console.log('    (Note: mustChangePassword=true est activé pour forcer la personnalisation du mot de passe)');
+  console.log(
+    '    (Note: mustChangePassword=true est activé pour forcer la personnalisation du mot de passe)',
+  );
 
   await AppDataSource.destroy();
   console.log('--- Seed terminé avec succès ---');

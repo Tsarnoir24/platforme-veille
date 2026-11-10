@@ -389,10 +389,10 @@ watch(
       applyManualSourceDefaults(sourceType);
 
       targetQuery.value =
-      '';
-    webPageUrl.value = '';
-    discoveredInfo.value = null;
-    sourceCreationMode.value = 'DIRECT';
+        '';
+      webPageUrl.value = '';
+      discoveredInfo.value = null;
+      sourceCreationMode.value = 'DIRECT';
     } else if (
       previousType ===
       'API'
@@ -1719,7 +1719,7 @@ onBeforeUnmount(() => {
             canCreateSource
           " label="Ajouter une source" @click="
             openNewSourceDialog
-            ">
+          ">
             <template #icon>
               <PlusIcon size="0.9rem" />
             </template>
@@ -1789,9 +1789,8 @@ onBeforeUnmount(() => {
 
 
           <div class="select-host">
-            <Select append-to="self" v-model="filters.aiQualified"
-              :options="aiQualificationOptions" option-label="label" option-value="value" show-clear
-              placeholder="Qualification IA" class="w-full" />
+            <Select append-to="self" v-model="filters.aiQualified" :options="aiQualificationOptions"
+              option-label="label" option-value="value" show-clear placeholder="Qualification IA" class="w-full" />
           </div>
 
 
@@ -1873,15 +1872,15 @@ view in
                 ]
                   " :total-records="total
                     " :sort-field="filters.sortBy
-                    " :sort-order="filters.sortOrder ===
-                    'ASC'
-                    ? 1
-                    : -1
-                    " @page="
-                    changePage
-                  " @sort="
-                  changeSort
-                ">
+                      " :sort-order="filters.sortOrder ===
+                      'ASC'
+                      ? 1
+                      : -1
+                      " @page="
+                      changePage
+                    " @sort="
+                    changeSort
+                  ">
 
           <template #empty>
             Aucun élément ne correspond aux critères sélectionnés.
@@ -2149,20 +2148,12 @@ view in
 
         <form id="watch-source-form" class="space-y-4" @submit.prevent="submitSource">
           <div class="source-mode-segmented" role="tablist" aria-label="Mode d'ajout de source">
-            <button
-              type="button"
-              class="source-mode-btn"
-              :class="{ active: sourceCreationMode === 'DIRECT' }"
-              @click="switchSourceCreationMode('DIRECT')"
-            >
+            <button type="button" class="source-mode-btn" :class="{ active: sourceCreationMode === 'DIRECT' }"
+              @click="switchSourceCreationMode('DIRECT')">
               Flux RSS / Atom, API et Import manuel
             </button>
-            <button
-              type="button"
-              class="source-mode-btn"
-              :class="{ active: sourceCreationMode === 'WEB_PAGE' }"
-              @click="switchSourceCreationMode('WEB_PAGE')"
-            >
+            <button type="button" class="source-mode-btn" :class="{ active: sourceCreationMode === 'WEB_PAGE' }"
+              @click="switchSourceCreationMode('WEB_PAGE')">
               Lien de page web (auto-détection HTML)
             </button>
           </div>
@@ -2177,25 +2168,16 @@ view in
                 Lien de la page web à surveiller
               </label>
               <div class="flex gap-2">
-                <InputText
-                  v-model="webPageUrl"
-                  class="w-full"
-                  placeholder="Ex. : https://www.iso.org/fr/standard/75100.html"
-                  required
-                  @blur="webPageUrl.trim() && !discoveredInfo && analyzeWebPageUrl()"
-                />
-                <Button
-                  type="button"
-                  label="Analyser le lien"
-                  severity="secondary"
-                  class="shrink-0"
-                  :loading="analyzingWebUrl"
-                  :disabled="!webPageUrl.trim() || analyzingWebUrl"
-                  @click="analyzeWebPageUrl"
-                />
+                <InputText v-model="webPageUrl" class="w-full"
+                  placeholder="Ex. : https://www.iso.org/fr/standard/75100.html" required
+                  @blur="webPageUrl.trim() && !discoveredInfo && analyzeWebPageUrl()" />
+                <Button type="button" label="Analyser le lien" severity="secondary" class="shrink-0"
+                  :loading="analyzingWebUrl" :disabled="!webPageUrl.trim() || analyzingWebUrl"
+                  @click="analyzeWebPageUrl" />
               </div>
               <p class="helper-text">
-                Collez directement l’adresse depuis la barre de recherche du navigateur (ISO, ANSES, revue, page HTML statique…).
+                Collez directement l’adresse depuis la barre de recherche du navigateur (ISO, ANSES, revue, page HTML
+                statique…).
               </p>
             </div>
 
@@ -2225,16 +2207,8 @@ view in
               <div>
                 <label class="required-label mb-2 block">Catégorie</label>
                 <div class="select-host">
-                  <Select
-                    append-to="self"
-                    v-model="sourceForm.category"
-                    :options="sourceCategoryDropdownItems"
-                    option-label="label"
-                    option-value="value"
-                    scroll-height="18rem"
-                    class="w-full"
-                    required
-                  />
+                  <Select append-to="self" v-model="sourceForm.category" :options="sourceCategoryDropdownItems"
+                    option-label="label" option-value="value" scroll-height="18rem" class="w-full" required />
                 </div>
               </div>
               <div>
@@ -2244,11 +2218,8 @@ view in
               </div>
               <div>
                 <label class="mb-2 block">Sujet à surveiller</label>
-                <InputText
-                  v-model="targetQuery"
-                  class="w-full"
-                  placeholder="Ex. : environnement, ISO 17025, laboratoire, microbiologie"
-                />
+                <InputText v-model="targetQuery" class="w-full"
+                  placeholder="Ex. : environnement, ISO 17025, laboratoire, microbiologie" />
                 <p class="helper-text">Séparez les sujets par des virgules.</p>
               </div>
             </div>
@@ -2274,34 +2245,18 @@ view in
               <div>
                 <label class="required-label mb-2 block">Catégorie</label>
                 <div class="select-host">
-                  <Select
-                    append-to="self"
-                    v-model="sourceForm.category"
-                    :options="sourceCategoryDropdownItems"
-                    option-label="label"
-                    option-value="value"
-                    scroll-height="18rem"
-                    class="w-full"
-                    required
-                  />
+                  <Select append-to="self" v-model="sourceForm.category" :options="sourceCategoryDropdownItems"
+                    option-label="label" option-value="value" scroll-height="18rem" class="w-full" required />
                 </div>
               </div>
 
               <div>
                 <label class="required-label mb-2 block">Type</label>
                 <div class="select-host">
-                  <Select
-                    append-to="self"
-                    v-model="sourceForm.sourceType"
-                    :options="optionsFr(sourceCreationTypeOptions)"
-                    option-label="label"
-                    option-value="value"
-                    scroll-height="18rem"
-                    class="w-full"
-                    required
-                    @update:model-value="applyManualSourceDefaults"
-                    @change="(event) => applyManualSourceDefaults(event.value)"
-                  />
+                  <Select append-to="self" v-model="sourceForm.sourceType"
+                    :options="optionsFr(sourceCreationTypeOptions)" option-label="label" option-value="value"
+                    scroll-height="18rem" class="w-full" required @update:model-value="applyManualSourceDefaults"
+                    @change="(event) => applyManualSourceDefaults(event.value)" />
                 </div>
               </div>
 
@@ -2325,11 +2280,8 @@ view in
 
             <div v-if="sourceForm.sourceType !== 'IMPORT_MANUEL'">
               <label class="mb-2 block">Sujet à surveiller</label>
-              <InputText
-                v-model="targetQuery"
-                class="w-full"
-                placeholder="Ex. : environnement, ISO 17025, laboratoire, microbiologie"
-              />
+              <InputText v-model="targetQuery" class="w-full"
+                placeholder="Ex. : environnement, ISO 17025, laboratoire, microbiologie" />
               <p class="helper-text">Séparez les sujets par des virgules.</p>
             </div>
 
@@ -2339,17 +2291,13 @@ view in
 
             <div v-if="sourceForm.sourceType === 'IMPORT_MANUEL'">
               <label for="watch-manual-import-file" class="required-label mb-2 block">Fichier à importer</label>
-              <input
-                id="watch-manual-import-file"
-                ref="manualImportInput"
-                type="file"
-                required
+              <input id="watch-manual-import-file" ref="manualImportInput" type="file" required
                 accept=".pdf,.csv,.xlsx,application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                @change="selectManualImportFile"
-              />
+                @change="selectManualImportFile" />
               <p class="helper-text">
-                CSV, XLSX ou PDF · 5 Mo maximum. Pour un PDF, utilisez un bloc par veille avec une ligne vide entre les blocs.
+                CSV, XLSX ou PDF · 5 Mo maximum. Pour un PDF, utilisez un bloc par veille avec une ligne vide entre les
+                blocs.
               </p>
             </div>
           </template>
