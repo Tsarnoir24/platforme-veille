@@ -104,28 +104,31 @@ La plateforme comprend notamment :
 - initialisation automatique de la base et script de seed (`npm run seed`) ;
 - journal d’audit ;
 - santé du système ;
-- tableau de bord et KPI.
+- tableau de bord et KPI adaptés à chaque rôle ;
+- interface complète avec thème **Mode Clair / Mode Sombre** persistant et harmonisé sur l’ensemble des vues et fenêtres modales.
 
 ---
 
-## 3. Rôles
+## 3. Rôles et permissions
 
-Les rôles initialisés automatiquement sont :
+Les cinq rôles initialisés automatiquement sont :
 
-- `ADMIN`
-- `RESPONSABLE_VEILLE`
-- `OPERATEUR_VEILLE`
-- `REFERENT_LABORATOIRE`
-- `LECTEUR`
+| Rôle (`Code`) | Périmètre et permissions principales |
+|---|---|
+| `ADMIN` | **Pilotage administratif complet** : gestion des utilisateurs et mots de passe temporaires, administration de la taxonomie (thèmes, domaines, catégories de veille avec sujets par défaut, laboratoires, mots-clés), création/modification/activation des sources, lancement des collectes, qualification (IA et manuelle), validation/rejet/publication/archivage, gestion de toutes les actions de suivi, génération des rapports et consultation du journal d’audit. |
+| `RESPONSABLE_VEILLE` | **Pilotage métier et qualité ISO/IEC 17025** : lancement et relance des collectes, qualification (IA et manuelle), validation ou rejet motivé, publication officielle et archivage des veilles, création/attribution/suivi des actions pour tous les référents, génération des rapports PDF/XLSX/CSV et consultation du journal d’audit. |
+| `OPERATEUR_VEILLE` | **Collecte et pré-qualification** : ajout de nouvelles sources (Flux RSS/Atom, API, Lien de page web auto-détecté HTML via Cheerio, Import manuel CSV/XLSX/PDF), traduction (DeepL), lancement de l’analyse IA et pré-qualification métier (pertinence, criticité, taxonomie). Ne peut ni valider définitivement ni publier. |
+| `REFERENT_LABORATOIRE` | **Suivi opérationnel du laboratoire** : consultation des veilles, suivi des indicateurs de publication, création d’actions pour lui-même et traitement/clôture des actions de suivi qui lui sont attribuées (statut, commentaire d’avancement, résultat). |
+| `LECTEUR` | **Consultation** : accès strictement limité aux veilles officiellement validées et **publiées** (`PUBLIE`), tableau de bord dédié aux publications diffusées, gestion de ses favoris, vues enregistrées, abonnements (alertes) et notifications. |
 
-Le backend reste l’autorité de sécurité. Le frontend masque aussi les actions qui ne correspondent pas au rôle connecté.
+Le backend reste l’autorité de sécurité (`JwtAuthGuard` + `RolesGuard`). Le frontend adapte automatiquement la barre latérale, les actions et les indicateurs du tableau de bord au rôle connecté.
 
 ---
 
 ## 4. Structure du dépôt
 
 ```text
-plateforme_veille/
+plateforme-veille/
 ├── backend/
 │   ├── src/
 │   │   ├── actions/
@@ -139,11 +142,13 @@ plateforme_veille/
 │   │   ├── database/
 │   │   │   ├── data-source.ts
 │   │   │   ├── database-seed.service.ts
+│   │   │   ├── seed.ts
 │   │   │   └── migrations/
 │   │   ├── favorites/
 │   │   ├── health/
 │   │   ├── notifications/
 │   │   ├── permissions/
+│   │   ├── public/
 │   │   ├── qualification/
 │   │   ├── reports/
 │   │   ├── roles/
@@ -161,15 +166,20 @@ plateforme_veille/
 │
 ├── frontend/
 │   ├── src/
+│   │   ├── components/
+│   │   ├── i18n/
 │   │   ├── layouts/
 │   │   ├── router/
 │   │   ├── services/
 │   │   ├── stores/
+│   │   ├── styles/
 │   │   ├── utils/
 │   │   └── views/
 │   ├── vite.config.ts
 │   └── package.json
 │
+├── deploy/
+├── scripts/
 ├── docker-compose.yml
 └── README.md
 ```
@@ -206,8 +216,8 @@ Node.js 20 ou plus récent est recommandé pour les versions de NestJS/Vite util
 Le dépôt est public : sa consultation et son clonage ne nécessitent pas d’autorisation préalable. Pour envoyer des modifications, authentifiez votre compte GitHub et vérifiez que vous disposez des droits de contribution.
 
 ```bash
-git clone https://github.com/koffiP24/plateforme_veille.git
-cd plateforme_veille
+git clone https://github.com/koffiP24/platforme-veille.git
+cd plateforme-veille
 ```
 
 Vérifier :
@@ -455,7 +465,7 @@ npm.cmd run start:dev
 Ouvrir un deuxième terminal :
 
 ```bash
-cd plateforme_veille/frontend
+cd plateforme-veille/frontend
 npm ci
 ```
 
@@ -1184,8 +1194,8 @@ git reset --hard origin/main
 Sur un poste déjà équipé de Git, Node et PostgreSQL :
 
 ```bash
-git clone https://github.com/koffiP24/plateforme_veille.git
-cd plateforme_veille
+git clone https://github.com/koffiP24/platforme-veille.git
+cd plateforme-veille
 
 cd backend
 npm ci
@@ -1198,7 +1208,7 @@ npm run start:dev
 Dans un autre terminal :
 
 ```bash
-cd plateforme_veille/frontend
+cd plateforme-veille/frontend
 npm ci
 # créer frontend/.env avec VITE_API_URL=/api/v1
 npm run dev
