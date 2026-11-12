@@ -26,6 +26,13 @@ export class FollowUpAction {
   @Column({ name: 'result', type: 'text', nullable: true }) result: string | null;
   @Column({ name: 'started_at', type: 'timestamptz', nullable: true }) startedAt: Date | null;
   @Column({ name: 'completed_at', type: 'timestamptz', nullable: true }) completedAt: Date | null;
+  @Column({ name: 'attachment_name', type: 'varchar', length: 255, nullable: true }) attachmentName: string | null;
+  @Column({ name: 'attachment_path', type: 'varchar', length: 500, nullable: true }) attachmentPath: string | null;
+  @Column({ name: 'attachment_mime', type: 'varchar', length: 100, nullable: true }) attachmentMime: string | null;
+  @Column({ name: 'attachment_size', type: 'int', nullable: true }) attachmentSize: number | null;
+  @Column({ name: 'effectiveness_evaluation', type: 'varchar', length: 50, nullable: true }) effectivenessEvaluation: string | null;
+  @Column({ name: 'effectiveness_comment', type: 'text', nullable: true }) effectivenessComment: string | null;
+  @Column({ name: 'effectiveness_date', type: 'timestamptz', nullable: true }) effectivenessDate: Date | null;
 
   @ManyToOne(() => WatchItem, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'watch_item_id' })

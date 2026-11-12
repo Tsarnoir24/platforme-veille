@@ -11,7 +11,7 @@ export type DashboardAnalytics = {
   distributions: Record<string, { title: string; items: DashboardDistributionItem[] }>;
   topSources: DashboardDistributionItem[];
   urgentItems: Array<{ id: number; title: string; status: string; criticality: string; sourceName: string }>;
-  dueActions: Array<{ id: number; title: string; status: string; dueDate: string | null; watchItemTitle: string }>;
+  dueActions: Array<{ id: number; title: string; status: string; dueDate: string | null; watchItemId?: number; watchItemTitle: string }>;
 };
 
 export function getDashboard(days: number) {

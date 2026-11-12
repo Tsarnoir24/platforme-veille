@@ -24,6 +24,7 @@ import FileExportIcon from '@primeicons/vue/file-export';
 import AppLayout from '../layouts/AppLayout.vue';
 import PageHeader from '../components/ui/PageHeader.vue';
 import SectionCard from '../components/ui/SectionCard.vue';
+import { useTableUrlPagination } from '../composables/useTableUrlPagination';
 
 import {
   labelFr,
@@ -121,6 +122,8 @@ const reports =
 
 const toast =
   useToast();
+
+const { firstRow, rowsPerPage, onPageChange } = useTableUrlPagination('page', 10, 'limit');
 
 const loading =
   ref(false);
@@ -1163,7 +1166,7 @@ onMounted(
       <SectionCard :title="`${reports.length} rapport${reports.length > 1 ? 's' : ''}`
         " subtitle="Historique des rapports générés." icon="pi pi-folder">
 
-        <DataTable :value="reports" :loading="loading" paginator :rows="10"  >
+        <DataTable :value="reports" :loading="loading" paginator :first="firstRow" :rows="rowsPerPage" :rows-per-page-options="[10, 20, 50]" @page="onPageChange">
 
           <template #empty>
             Aucun rapport généré pour le moment.

@@ -22,6 +22,7 @@ import {
 import AppLayout from '../layouts/AppLayout.vue';
 import PageHeader from '../components/ui/PageHeader.vue';
 import SectionCard from '../components/ui/SectionCard.vue';
+import { useTableUrlPagination } from '../composables/useTableUrlPagination';
 
 import {
   labelFr,
@@ -104,6 +105,8 @@ const subscriptions =
 
 const toast =
   useToast();
+
+const { firstRow, rowsPerPage, onPageChange } = useTableUrlPagination('page', 10, 'limit');
 
 const choices =
   ref<SubscriptionOptions>({
@@ -507,7 +510,7 @@ onMounted(
 
             <div class="select-host">
               <Select append-to="self" v-model="form.subscriptionType
-              " :options="subscriptionTypeOptions
+                " :options="subscriptionTypeOptions
                 " option-label="label" option-value="value" placeholder="Sélectionner un type" class="w-full" />
             </div>
 
@@ -522,9 +525,9 @@ onMounted(
 
             <div class="select-host">
               <Select append-to="self" v-model="form.targetId
-              " :options="targetOptions
+                " :options="targetOptions
                 " option-label="label" option-value="id" :placeholder="targetPlaceholder
-                " filter class="w-full" />
+                  " filter class="w-full" />
             </div>
 
           </div>
@@ -538,8 +541,9 @@ onMounted(
 
             <div class="select-host">
               <Select append-to="self" v-model="form.channel
-              " :options="channelOptions
-                " option-label="label" option-value="value" option-disabled="disabled" placeholder="Sélectionner un mode" class="w-full" />
+                " :options="channelOptions
+                " option-label="label" option-value="value" option-disabled="disabled"
+                placeholder="Sélectionner un mode" class="w-full" />
             </div>
 
           </div>
@@ -548,8 +552,8 @@ onMounted(
           <Button label="S’abonner" :loading="creating
             " :disabled="!form.targetId || isDuplicateSelection
               " @click="
-              subscribe
-            ">
+                subscribe
+              ">
             <template #icon>
               <BellIcon size="0.9rem" />
             </template>
@@ -579,33 +583,14 @@ onMounted(
         <div class="subscriptions-search-toolbar">
           <div class="search-box">
             <i class="pi pi-search search-icon" />
-            <InputText
-              v-model="searchQuery"
-              placeholder="Rechercher un abonnement ..."
-              class="search-input"
-            />
-            <Button
-              v-if="searchQuery"
-              icon="pi pi-times"
-              text
-              rounded
-              size="small"
-              class="clear-search-btn"
-              aria-label="Effacer la recherche"
-              @click="searchQuery = ''"
-            />
+            <InputText v-model="searchQuery" placeholder="Rechercher un abonnement ..." class="search-input" />
+            <Button v-if="searchQuery" icon="pi pi-times" text rounded size="small" class="clear-search-btn"
+              aria-label="Effacer la recherche" @click="searchQuery = ''" />
           </div>
         </div>
 
-        <DataTable
-          :value="filteredSubscriptions"
-          :loading="loading"
-          paginator
-          :rows="10"
-          :rows-per-page-options="[10, 20, 50]"
-          
-          
-        >
+        <DataTable :value="filteredSubscriptions" :loading="loading" paginator :first="firstRow" :rows="rowsPerPage"
+          :rows-per-page-options="[10, 20, 50]" @page="onPageChange">
 
           <template #empty>
             Aucun abonnement enregistré.
@@ -650,11 +635,11 @@ onMounted(
           <Column field="active" header="Statut" style="width: 9rem" sortable>
             <template #body="{ data }">
               <Tag :value="data.active
-                  ? 'Actif'
-                  : 'Inactif'
+                ? 'Actif'
+                : 'Inactif'
                 " :severity="data.active
-                    ? 'success'
-                    : 'secondary'
+                  ? 'success'
+                  : 'secondary'
                   " />
             </template>
           </Column>
@@ -845,5 +830,4 @@ onMounted(
   padding: 0 !important;
   color: var(--text-color-secondary, #64748b);
 }
-
 </style>

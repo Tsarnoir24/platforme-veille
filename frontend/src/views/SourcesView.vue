@@ -30,6 +30,7 @@ import { buildConnectorConfig } from '../services/connector-config';
 import { defaultSourceQuery, registerCategoryQueries } from '../utils/source-targeting';
 import { getCategories, type WatchCategory } from '../services/taxonomy.service';
 import { safeExternalUrl } from '../utils/safe-external-url';
+import { useTableUrlPagination } from '../composables/useTableUrlPagination';
 
 import AppLayout from '../layouts/AppLayout.vue';
 import { useAuthStore } from '../stores/auth';
@@ -75,7 +76,7 @@ const dbCategories = ref<WatchCategory[]>([]);
 const feedItems = ref<WatchItem[]>([]);
 const feedLoading = ref(false);
 const sourceSearch = ref('');
-const sourceTableFirst = ref(0);
+const { firstRow: sourceTableFirst, rowsPerPage: sourceTableRows, onPageChange: onSourcePageChange } = useTableUrlPagination('page', 10, 'limit');
 
 function normalizeSearchValue(value: unknown): string {
     return String(value ?? '')
@@ -799,10 +800,10 @@ onMounted(() => {
                     lorsqu’elle est à qualifier, validée ou publiée.
                 </p>
                 <DataTable class="compact-table" :value="sourceRows" :loading="loading || feedLoading" paginator
-                    :first="sourceTableFirst" :rows="10" :rows-per-page-options="[5, 10, 20, 50]"
+                    :first="sourceTableFirst" :rows="sourceTableRows" :rows-per-page-options="[5, 10, 20, 50]"
                     paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown CurrentPageReport"
                     current-page-report-template="{first} à {last} sur {totalRecords} sources"
-                    @page="sourceTableFirst = $event.first">
+                    @page="onSourcePageChange">
                     <template #empty>
                         {{ sourceSearch.trim() ? 'Aucune source ne correspond à la recherche.' : 'Aucune source enregistrée.' }}
                     </template>

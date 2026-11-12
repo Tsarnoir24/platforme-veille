@@ -23,7 +23,7 @@ withDefaults(
         <i :class="icon" aria-hidden="true" />
       </span>
 
-      <div>
+      <div class="heading-text">
         <span v-if="eyebrow" class="page-eyebrow">
           {{ eyebrow }}
         </span>
@@ -64,12 +64,21 @@ withDefaults(
 
 .page-heading {
   display: flex;
-
   min-width: 0;
-
+  flex: 1;
   align-items: center;
-
   gap: 0.85rem;
+}
+
+.heading-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.heading-text h1,
+.heading-text p {
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .page-icon {
@@ -155,13 +164,31 @@ withDefaults(
   gap: 0.6rem;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .page-header {
-    align-items:
-      flex-start;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+  }
 
-    flex-direction:
-      column;
+  .page-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: 0 0 2.5rem;
+  }
+
+  .page-icon i {
+    font-size: 1.05rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .page-header p {
+    font-size: 0.76rem;
+    line-height: 1.35;
   }
 
   .page-actions {

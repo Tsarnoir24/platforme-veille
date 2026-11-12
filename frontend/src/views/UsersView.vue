@@ -29,6 +29,7 @@ import AppLayout from '../layouts/AppLayout.vue';
 import PageHeader from '../components/ui/PageHeader.vue';
 import SectionCard from '../components/ui/SectionCard.vue';
 import StatusBadge from '../components/ui/StatusBadge.vue';
+import { useTableUrlPagination } from '../composables/useTableUrlPagination';
 
 import api from '../services/api';
 
@@ -83,6 +84,8 @@ const auth =
 
 const toast =
   useToast();
+
+const { firstRow, rowsPerPage, onPageChange } = useTableUrlPagination('page', 10, 'limit');
 
 const users =
   ref<UserRow[]>([]);
@@ -708,13 +711,12 @@ onMounted(
 
         <DataTable :value="filteredUsers
           " :loading="loading
-            " data-key="id" paginator :rows="10
-              " :rows-per-page-options="[
+            " data-key="id" paginator :first="firstRow" :rows="rowsPerPage" :rows-per-page-options="[
               10,
               20,
               50,
-            ]
-              ">
+            ]"
+            @page="onPageChange">
 
           <template #empty>
             Aucun utilisateur disponible.

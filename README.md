@@ -97,7 +97,7 @@ La plateforme comprend notamment :
 - abonnements ;
 - notifications internes ;
 - alertes e-mail ;
-- actions de suivi ;
+- actions de suivi (traçabilité complète ISO/IEC 17025 : statuts, alertes d'échéance et retard, preuves documentaires jointes, évaluation d'efficacité a posteriori et export du plan d'actions Excel/CSV) ;
 - rapports PDF / XLSX / CSV ;
 - API publique sécurisée pour consultation externe (`GET /api/v1/public/watch-items`) ;
 - Webhooks sortants signés cryptographiquement (`HMAC-SHA256`) pour diffusion événementielle vers le Système de Management de la Qualité (SMQ) ;
@@ -758,6 +758,7 @@ Lorsqu’il choisit **Terminer**, un formulaire lui permet de renseigner :
 
 - un commentaire d’avancement ;
 - le résultat ou la conclusion ;
+- une preuve documentaire facultative (certificat d'étalonnage, feuille d'émargement de formation, rapport d'essai au format PDF/DOCX/image/XLSX) téléversable et téléchargeable pour satisfaire les audits ISO/IEC 17025 ;
 - la date de début et la date de clôture.
 
 La validation du formulaire clôture l’action et enregistre ces informations avec celle-ci.
@@ -765,7 +766,10 @@ Les dates sont également renseignées automatiquement lors du passage à « En 
 à « Terminée » lorsqu’elles ne sont pas déjà définies. L’affectation, les changements
 d’état et les informations de suivi sont conservés dans le journal d’audit.
 
-Lorsqu’une action non clôturée (`OPEN` ou `IN_PROGRESS`) dépasse sa date d’échéance (`dueDate`), l’interface affiche un compteur et un badge rouge **« En retard »** dans la vue des actions, et le planificateur backend envoie automatiquement une notification d’alerte interne au responsable de l’action ainsi qu’aux administrateurs et responsables de veille.
+De plus, le module intègre :
+- **Filtrage interactif et alertes de retard** : compteur et badge rouge **« En retard »** dès que l'échéance est dépassée, cartes statistiques cliquables pour isoler les actions urgentes ou en retard, et notifications automatiques aux responsables et managers ;
+- **Évaluation de l'efficacité a posteriori** : validation qualité (Efficace / Partiellement efficace / Non efficace) avec justification pour la revue de direction ;
+- **Export du plan d'actions (Excel/CSV)** : téléchargement direct en un clic pour les audits et comités de direction.
 
 La migration `AddActionProgressFields` doit être exécutée avant d’utiliser ces champs.
 

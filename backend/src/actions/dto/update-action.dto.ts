@@ -21,4 +21,10 @@ export class UpdateActionDto {
   @IsOptional() @IsDateString() dueDate?: string | null;
   @IsOptional() @IsString() @MaxLength(5000) progressComment?: string;
   @IsOptional() @IsString() @MaxLength(10000) result?: string;
+  @IsOptional() @IsString() @MaxLength(255) attachmentName?: string | null;
+  @IsOptional() @IsString() @MaxLength(500) attachmentPath?: string | null;
+  @IsOptional() @IsString() @MaxLength(100) attachmentMime?: string | null;
+  @IsOptional() @IsInt() attachmentSize?: number | null;
+  @IsOptional() @IsIn(['EFFICACE', 'PARTIELLEMENT_EFFICACE', 'NON_EFFICACE']) effectivenessEvaluation?: string | null;
+  @IsOptional() @IsString() @MaxLength(5000) effectivenessComment?: string | null;
 }

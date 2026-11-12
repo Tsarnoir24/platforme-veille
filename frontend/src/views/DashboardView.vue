@@ -6,6 +6,7 @@ import {
   ref,
   watch,
 } from 'vue';
+import { useRouter } from 'vue-router';
 
 import Message from 'primevue/message';
 import Button from 'primevue/button';
@@ -34,9 +35,28 @@ import { stripHtmlTags } from '../utils/clean-text';
 
 const auth =
   useAuthStore();
+const router = useRouter();
+
+function openWatchItem(id: number) {
+  void router.push({
+    name: 'watch-item-detail',
+    params: { id },
+    query: { returnTo: '/' },
+  });
+}
+
+function openActionWatchItem(action: { watchItemId?: number }) {
+  if (action.watchItemId) {
+    openWatchItem(action.watchItemId);
+  } else {
+    void router.push('/actions');
+  }
+}
 
 const stats =
   ref<DashboardStats>({});
+
+const kpisCollapsed = ref(false);
 
 const analytics =
   ref<DashboardAnalytics | null>(
@@ -500,16 +520,20 @@ onBeforeUnmount(() => {
         subtitle="Vue synthétique de l’activité de veille et des éléments nécessitant votre attention."
         eyebrow="Pilotage" icon="pi pi-chart-bar">
         <template #actions>
+          <div class="dashboard-header-actions">
+            <Tag :value="dashboardRole" severity="secondary" class="dashboard-role-badge" />
 
-          <Tag :value="dashboardRole
-            " severity="secondary" />
-
-          <div class="select-host period-select-host">
-            <Select append-to="self" v-model="period
-              " :options="periods
-                " option-label="label" option-value="value" class="period-select" aria-label="Période d'analyse" />
+            <div class="period-select-wrap">
+              <Select
+                v-model="period"
+                :options="periods"
+                option-label="label"
+                option-value="value"
+                class="period-select"
+                aria-label="Période d'analyse"
+              />
+            </div>
           </div>
-
         </template>
       </PageHeader>
 
@@ -528,16 +552,36 @@ onBeforeUnmount(() => {
 
       <template v-else>
 
-        <div class="metric-grid">
-          <MetricCard v-for="
-card in cards
-            " :key="card.key
-              " :label="card.label
-                " :value="card.value
-                  " :tone="tone(
-                  card.key,
-                )
-                  " />
+        <!-- Section Indicateurs Clés avec défilement horizontal mobile et flèche pour replier/masquer -->
+        <div class="kpi-wrapper">
+          <div class="kpi-header-ctrl" @click="kpisCollapsed = !kpisCollapsed">
+            <div class="kpi-title-block">
+              <i class="pi pi-chart-pie kpi-icon" />
+              <span class="kpi-title">Indicateurs clés</span>
+              <span class="kpi-badge">{{ cards.length }}</span>
+            </div>
+            <button
+              type="button"
+              class="kpi-collapse-btn"
+              :aria-expanded="!kpisCollapsed"
+              :title="kpisCollapsed ? 'Afficher les indicateurs' : 'Masquer les indicateurs'"
+            >
+              <span class="collapse-label">{{ kpisCollapsed ? 'Afficher' : 'Masquer' }}</span>
+              <i :class="kpisCollapsed ? 'pi pi-chevron-down' : 'pi pi-chevron-up'" />
+            </button>
+          </div>
+
+          <div v-show="!kpisCollapsed" class="metric-grid-scroll-wrap">
+            <div class="metric-grid">
+              <MetricCard
+                v-for="card in cards"
+                :key="card.key"
+                :label="card.label"
+                :value="card.value"
+                :tone="tone(card.key)"
+              />
+            </div>
+          </div>
         </div>
 
         <div v-if="analyticsLoading && !analytics" class="loading-panel">
@@ -645,14 +689,15 @@ source,
 
 
             <ul>
-              <li v-for="
-urgent in
-  analytics
-    .urgentItems
-                " :key="urgent.id
-                  ">
+              <li
+                v-for="urgent in analytics.urgentItems"
+                :key="urgent.id"
+                class="clickable-item"
+                title="Cliquer pour consulter cette veille"
+                @click="openWatchItem(urgent.id)"
+              >
                 <div>
-                  <strong>
+                  <strong class="item-interactive-title">
                     {{ stripHtmlTags(urgent.title) }}
                   </strong>
 
@@ -685,14 +730,15 @@ urgent in
 
 
             <ul>
-              <li v-for="
-action in
-  analytics
-    .dueActions
-                " :key="action.id
-                  ">
+              <li
+                v-for="action in analytics.dueActions"
+                :key="action.id"
+                class="clickable-item"
+                title="Cliquer pour consulter la veille associée"
+                @click="openActionWatchItem(action)"
+              >
                 <div>
-                  <strong>
+                  <strong class="item-interactive-title">
                     {{ action.title }}
                   </strong>
 
@@ -749,21 +795,96 @@ action in
     4.5rem;
 }
 
+.dashboard-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.period-select-wrap {
+  min-width: 12rem;
+}
+
+.kpi-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  padding: 0.85rem 1rem;
+  box-shadow: var(--app-shadow-soft);
+}
+
+.kpi-header-ctrl {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.15rem 0;
+}
+
+.kpi-title-block {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.kpi-icon {
+  color: var(--app-primary);
+  font-size: 1.05rem;
+}
+
+.kpi-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--app-text);
+}
+
+.kpi-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--app-primary);
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.kpi-collapse-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--app-surface-2);
+  border: 1px solid var(--app-border);
+  border-radius: 0.5rem;
+  padding: 0.3rem 0.65rem;
+  color: var(--app-text-muted);
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.kpi-collapse-btn:hover {
+  background: var(--app-surface-3);
+  color: var(--app-text);
+}
+
+.metric-grid-scroll-wrap {
+  width: 100%;
+}
+
 .period-select {
-  width:
-    12rem;
+  width: 12rem;
 }
 
 .metric-grid {
   display: grid;
-
-  grid-template-columns:
-    repeat(auto-fit,
-      minmax(12rem,
-        1fr));
-
-  gap:
-    0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.75rem;
 }
 
 .distribution-grid {
@@ -970,6 +1091,22 @@ action in
     650;
 }
 
+.clickable-item {
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  padding: 0.55rem 0.5rem;
+  border-radius: var(--app-radius-sm, 6px);
+}
+
+.clickable-item:hover {
+  background-color: var(--app-surface-hover, rgba(255, 255, 255, 0.05));
+  transform: translateX(2px);
+}
+
+.clickable-item:hover .item-interactive-title {
+  color: var(--app-primary, #10b981);
+}
+
 @media (max-width: 1100px) {
 
   .distribution-grid,
@@ -982,14 +1119,63 @@ action in
   }
 }
 
-@media (max-width: 680px) {
+@media (max-width: 850px) {
+  .dashboard-header-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 0.5rem;
+  }
 
-  .metric-grid,
+  .dashboard-role-badge {
+    flex-shrink: 0;
+  }
+
+  .period-select-wrap {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .period-select {
+    width: 100% !important;
+  }
+
+  .metric-grid-scroll-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.4rem;
+    scrollbar-width: none;
+  }
+
+  .metric-grid-scroll-wrap::-webkit-scrollbar {
+    display: none;
+  }
+
+  .metric-grid {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 0.75rem;
+    width: max-content;
+    scroll-snap-type: x mandatory;
+  }
+
+  .metric-grid > * {
+    flex: 0 0 13rem !important;
+    min-width: 13rem !important;
+    scroll-snap-align: start;
+  }
+
   .distribution-grid,
   .details-grid,
   .details-grid.has-actions {
-    grid-template-columns:
-      1fr;
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .detail-card {
+    padding: 0.85rem;
   }
 }
 </style>

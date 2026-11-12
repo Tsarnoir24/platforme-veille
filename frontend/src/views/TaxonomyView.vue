@@ -36,6 +36,7 @@ import TrashIcon from '@primeicons/vue/trash';
 import AppLayout from '../layouts/AppLayout.vue';
 import PageHeader from '../components/ui/PageHeader.vue';
 import SectionCard from '../components/ui/SectionCard.vue';
+import { useTableUrlPagination } from '../composables/useTableUrlPagination';
 
 import {
   createCategory,
@@ -97,6 +98,8 @@ const toast =
   useToast();
 const route = useRoute();
 const router = useRouter();
+
+const { firstRow, rowsPerPage, onPageChange } = useTableUrlPagination('p', 10, 'limit');
 const taxonomyTabs: TaxonomyKind[] = ['topics', 'domains', 'categories', 'laboratories', 'keywords'];
 const initialTab = typeof route.query.tab === 'string' && taxonomyTabs.includes(route.query.tab as TaxonomyKind)
   ? route.query.tab as TaxonomyKind
@@ -1176,7 +1179,8 @@ onMounted(
 
                   <DataTable :value="filteredTopics
                   " :loading="loading
-                    " paginator :rows="10" :rows-per-page-options="[10, 20, 50]">
+                    " paginator :first="firstRow" :rows="rowsPerPage" :rows-per-page-options="[10, 20, 50]"
+                    @page="onPageChange">
 
                   <template #empty>
                     Aucun thème enregistré.
@@ -1293,7 +1297,8 @@ onMounted(
 
                 <DataTable :value="filteredDomains
                   " :loading="loading
-                    " paginator :rows="10" :rows-per-page-options="[10, 20, 50]">
+                    " paginator :first="firstRow" :rows="rowsPerPage" :rows-per-page-options="[10, 20, 50]"
+                    @page="onPageChange">
 
                   <template #empty>
                     Aucun domaine enregistré.
@@ -1410,8 +1415,10 @@ onMounted(
                     :value="filteredCategories"
                     :loading="loading"
                     paginator
-                    :rows="10"
+                    :first="firstRow"
+                    :rows="rowsPerPage"
                     :rows-per-page-options="[10, 20, 50]"
+                    @page="onPageChange"
                   >
                     <template #empty>
                       Aucune catégorie de veille enregistrée.
@@ -1516,7 +1523,8 @@ onMounted(
 
                 <DataTable :value="filteredLaboratories
                   " :loading="loading
-                    " paginator :rows="10" :rows-per-page-options="[10, 20, 50]">
+                    " paginator :first="firstRow" :rows="rowsPerPage" :rows-per-page-options="[10, 20, 50]"
+                    @page="onPageChange">
 
                   <template #empty>
                     Aucun laboratoire enregistré.
@@ -1633,7 +1641,8 @@ onMounted(
 
                 <DataTable :value="filteredKeywords
                   " :loading="loading
-                    " paginator :rows="10" :rows-per-page-options="[10, 20, 50]">
+                    " paginator :first="firstRow" :rows="rowsPerPage" :rows-per-page-options="[10, 20, 50]"
+                    @page="onPageChange">
 
                   <template #empty>
                     Aucun mot-clé enregistré.
@@ -2206,8 +2215,21 @@ onMounted(
     transparent;
 }
 
+:deep(.p-tablist-tab-list) {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+:deep(.p-tablist-tab-list)::-webkit-scrollbar {
+  display: none;
+}
+
 :deep(.p-tab) {
   border: 0;
+  white-space: nowrap;
+  flex-shrink: 0;
 
   background:
     transparent;

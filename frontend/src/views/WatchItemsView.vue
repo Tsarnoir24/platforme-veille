@@ -107,6 +107,26 @@ const auth =
 const toast =
   useToast();
 
+const mobileFiltersExpanded = ref(false);
+
+function quickFilter(type: 'all' | 'critical' | 'high' | 'to_qualify' | 'favorites') {
+  if (type === 'all') {
+    filters.value.criticality = '';
+    filters.value.status = '';
+    filters.value.favoritesOnly = false;
+  } else if (type === 'critical') {
+    filters.value.criticality = filters.value.criticality === 'CRITIQUE' ? '' : 'CRITIQUE';
+  } else if (type === 'high') {
+    filters.value.criticality = filters.value.criticality === 'ELEVEE' ? '' : 'ELEVEE';
+  } else if (type === 'to_qualify') {
+    filters.value.status = filters.value.status === 'A_QUALIFIER' ? '' : 'A_QUALIFIER';
+  } else if (type === 'favorites') {
+    filters.value.favoritesOnly = !filters.value.favoritesOnly;
+  }
+  filters.value.page = 1;
+  search();
+}
+
 function queryValue(value: unknown, fallback = ''): string {
   return typeof value === 'string' ? value : fallback;
 }
@@ -1581,6 +1601,15 @@ function changeAddedOrder(order: 'ASC' | 'DESC') {
 }
 
 
+function syncUrlWithFilters(replace = false) {
+  const query = listStateQuery();
+  if (replace) {
+    void router.replace({ query });
+  } else {
+    void router.push({ query });
+  }
+}
+
 function changePage(
   event: {
     page:
@@ -1596,6 +1625,7 @@ function changePage(
   filters.value.limit =
     event.rows;
 
+  syncUrlWithFilters(false);
   void load();
 }
 
@@ -1673,17 +1703,33 @@ watch(
 
 
 watch(
-  () =>
-    route.query.favorites,
+  () => route.query,
+  (newQuery) => {
+    // Only react when navigating to /watch-items
+    if (route.name !== 'watch-items') return;
+    const newPage = queryNumber(newQuery.page, 1, 1, 100000);
+    const newLimit = queryNumber(newQuery.limit, 20, 1, 100);
+    const newFavorites = newQuery.favorites === '1';
 
-  (value) => {
-    filters.value.favoritesOnly =
-      value ===
-      '1';
+    let changed = false;
+    if (filters.value.page !== newPage) {
+      filters.value.page = newPage;
+      changed = true;
+    }
+    if (filters.value.limit !== newLimit) {
+      filters.value.limit = newLimit;
+      changed = true;
+    }
+    if (filters.value.favoritesOnly !== newFavorites) {
+      filters.value.favoritesOnly = newFavorites;
+      changed = true;
+    }
 
-    filters.value.page =
-      1;
+    if (changed) {
+      void load();
+    }
   },
+  { deep: true },
 );
 
 
@@ -1748,63 +1794,100 @@ onBeforeUnmount(() => {
 
 
       <SectionCard compact>
-        <div class="filters-grid">
+        <!-- Search bar always visible -->
+        <div class="search-field mb-2">
+          <i class="pi pi-search" />
+          <InputText
+            v-model="filters.q"
+            class="w-full"
+            placeholder="Rechercher un flux, un titre ou un résumé..."
+            @keyup.enter="search"
+          />
+        </div>
 
-          <div class="search-field">
-            <i class="pi pi-search" />
+        <!-- Mobile Quick Pill Filters -->
+        <div class="mobile-pills-bar">
+          <button
+            type="button"
+            class="mobile-filter-pill"
+            :class="{ active: !filters.criticality && !filters.status && !filters.favoritesOnly }"
+            @click="quickFilter('all')"
+          >
+            Tous
+          </button>
+          <button
+            type="button"
+            class="mobile-filter-pill pill-critical"
+            :class="{ active: filters.criticality === 'CRITIQUE' }"
+            @click="quickFilter('critical')"
+          >
+            <i class="pi pi-exclamation-triangle" />
+            Critiques
+          </button>
+          <button
+            type="button"
+            class="mobile-filter-pill pill-high"
+            :class="{ active: filters.criticality === 'ELEVEE' }"
+            @click="quickFilter('high')"
+          >
+            <i class="pi pi-info-circle" />
+            Élevées
+          </button>
+          <button
+            type="button"
+            class="mobile-filter-pill pill-qualify"
+            :class="{ active: filters.status === 'A_QUALIFIER' }"
+            @click="quickFilter('to_qualify')"
+          >
+            <i class="pi pi-clock" />
+            À qualifier
+          </button>
+          <button
+            type="button"
+            class="mobile-filter-pill pill-fav"
+            :class="{ active: filters.favoritesOnly }"
+            @click="quickFilter('favorites')"
+          >
+            <i class="pi pi-star-fill text-amber-400" />
+            Favoris
+          </button>
+          <button
+            type="button"
+            class="mobile-filter-pill pill-more"
+            :class="{ active: mobileFiltersExpanded }"
+            @click="mobileFiltersExpanded = !mobileFiltersExpanded"
+          >
+            <i class="pi pi-sliders-h" />
+            {{ mobileFiltersExpanded ? 'Masquer' : 'Filtres +' }}
+          </button>
+        </div>
 
-            <InputText v-model="filters.q
-              " class="w-full" placeholder="Rechercher un flux, un titre ou un résumé..." @keyup.enter="
-                search
-              " />
+        <div class="filters-grid" :class="{ 'mobile-filters-hidden': !mobileFiltersExpanded }">
+          <div class="select-host">
+            <Select append-to="self" v-model="filters.status" :options="visibleStatusOptions" option-label="label" option-value="value" show-clear placeholder="Statut" class="w-full" />
           </div>
-
 
           <div class="select-host">
-            <Select append-to="self" v-model="filters.status
-              " :options="visibleStatusOptions
-                " option-label="label" option-value="value" show-clear placeholder="Statut" class="w-full" />
+            <Select append-to="self" v-model="filters.criticality" :options="criticalityOptions" option-label="label" option-value="value" show-clear placeholder="Importance" class="w-full" />
           </div>
-
 
           <div class="select-host">
-            <Select append-to="self" v-model="filters.criticality
-              " :options="criticalityOptions
-                " option-label="label" option-value="value" show-clear placeholder="Importance" class="w-full" />
+            <Select append-to="self" v-model="filters.watchType" :options="watchTypeOptions" option-label="label" option-value="value" show-clear placeholder="Type de veille" class="w-full" />
           </div>
-
 
           <div class="select-host">
-            <Select append-to="self" v-model="filters.watchType
-              " :options="watchTypeOptions
-                " option-label="label" option-value="value" show-clear placeholder="Type de veille" class="w-full" />
+            <Select append-to="self" v-model="filters.sourceType" :options="sourceTypeOptions" option-label="label" option-value="value" show-clear placeholder="Type de source" class="w-full" />
           </div>
-
 
           <div class="select-host">
-            <Select append-to="self" v-model="filters.sourceType
-              " :options="sourceTypeOptions
-                " option-label="label" option-value="value" show-clear placeholder="Type de source" class="w-full" />
+            <Select append-to="self" v-model="filters.aiQualified" :options="aiQualificationOptions" option-label="label" option-value="value" show-clear placeholder="Qualification IA" class="w-full" />
           </div>
-
 
           <div class="select-host">
-            <Select append-to="self" v-model="filters.aiQualified" :options="aiQualificationOptions"
-              option-label="label" option-value="value" show-clear placeholder="Qualification IA" class="w-full" />
+            <Select append-to="self" :model-value="filters.addedOrder" :options="addedOrderOptions" option-label="label" option-value="value" class="w-full" aria-label="Trier les éléments par date d’ajout" @update:model-value="changeAddedOrder" />
           </div>
 
-
-          <div class="select-host">
-            <Select append-to="self" :model-value="filters.addedOrder" :options="addedOrderOptions" option-label="label"
-              option-value="value" class="w-full" aria-label="Trier les éléments par date d’ajout"
-              @update:model-value="changeAddedOrder" />
-          </div>
-
-
-          <Button label="Réinitialiser" icon="pi pi-filter-slash" severity="secondary" text @click="
-            resetFilters
-          " />
-
+          <Button label="Réinitialiser" icon="pi pi-filter-slash" severity="secondary" text @click="resetFilters" />
         </div>
       </SectionCard>
 
@@ -1857,7 +1940,7 @@ view in
       <SectionCard :title="`${total} élément${total > 1 ? 's' : ''}`
         " subtitle="Informations collectées et disponibles dans la plateforme." icon="pi pi-list">
 
-        <DataTable class="watch-table" table-style="width: 100%; table-layout: fixed" :value="items
+        <DataTable class="watch-table desktop-table-only" table-style="min-width: 65rem" :value="items
           " :loading="loading
             " data-key="id" lazy paginator :first="(
               filters.page - 1
@@ -1887,7 +1970,7 @@ view in
           </template>
 
 
-          <Column header="Flux" sort-field="sourceName" sortable style="width: 13%">
+          <Column header="Flux" sort-field="sourceName" sortable style="min-width: 10rem">
             <template #body="{ data }">
 
               <div class="source-cell">
@@ -1912,7 +1995,7 @@ view in
           </Column>
 
 
-          <Column header="Type de source" sort-field="sourceType" sortable style="width: 10%">
+          <Column header="Type de source" sort-field="sourceType" sortable style="min-width: 8rem">
             <template #body="{ data }">
               <SourceTypeBadge :type="data.source
                 ?.sourceType
@@ -1921,7 +2004,7 @@ view in
           </Column>
 
 
-          <Column field="title" header="Titre" sortable style="width: 20%">
+          <Column field="title" header="Titre" sortable style="min-width: 15rem">
             <template #body="{ data }">
 
               <button type="button" class="title-link" @click="openWatchItem(data.id)">
@@ -1932,7 +2015,7 @@ view in
           </Column>
 
 
-          <Column header="Publication" sort-field="publishedAt" sortable style="width: 11%">
+          <Column header="Publication" sort-field="publishedAt" sortable style="min-width: 8rem">
             <template #body="{ data }">
               <span class="date-text">
                 {{
@@ -1945,7 +2028,7 @@ view in
           </Column>
 
 
-          <Column header="Résumé" style="width: 17%">
+          <Column header="Résumé" style="min-width: 14rem">
             <template #body="{ data }">
               <p class="watch-summary">
                 {{
@@ -1958,7 +2041,7 @@ view in
           </Column>
 
 
-          <Column header="Importance" sort-field="relevance" sortable style="width: 10%">
+          <Column header="Importance" sort-field="relevance" sortable style="min-width: 8.5rem">
             <template #body="{ data }">
 
               <Tag :value="data.criticality
@@ -1975,7 +2058,7 @@ view in
           </Column>
 
 
-          <Column header="Statut" sort-field="status" sortable style="width: 9%">
+          <Column header="Statut" sort-field="status" sortable style="min-width: 7.5rem">
             <template #body="{ data }">
               <StatusBadge :status="data.status
                 " />
@@ -1983,7 +2066,7 @@ view in
           </Column>
 
 
-          <Column header="Actions" style="width: 10%">
+          <Column header="Actions" style="min-width: 6rem">
             <template #body="{ data }">
 
               <div class="table-actions">
@@ -2061,6 +2144,129 @@ view in
           </Column>
 
         </DataTable>
+
+        <!-- Executive Card Flow (Mobile ONLY - Proposition 1) -->
+        <div class="executive-card-flow mobile-card-only">
+          <div v-if="items.length === 0 && !loading" class="empty-feed-card">
+            <i class="pi pi-inbox text-3xl opacity-40 mb-2"></i>
+            <p>Aucun élément ne correspond aux critères sélectionnés.</p>
+            <Button label="Réinitialiser les filtres" severity="secondary" size="small" class="mt-2" @click="resetFilters" />
+          </div>
+
+          <article
+            v-for="item in items"
+            :key="item.id"
+            class="executive-watch-card"
+            @click="openWatchItem(item.id)"
+          >
+            <!-- Card Top: Tag Urgence + Source tag + Favorite -->
+            <div class="card-header-bar">
+              <div class="card-badges">
+                <Tag
+                  :value="item.criticality ? labelFr(item.criticality) : 'Non qualifiée'"
+                  :severity="prioritySeverity(item.criticality)"
+                  class="urgency-pill font-semibold"
+                />
+                <span class="source-bubble" :title="item.source?.name">
+                  {{ item.source?.name ?? 'Source générale' }}
+                </span>
+              </div>
+              <div class="card-meta-top">
+                <span class="card-date">{{ formatDate(item.publishedAt || item.collectedAt) }}</span>
+                <button
+                  type="button"
+                  class="card-fav-btn"
+                  :class="{ active: favorites.includes(item.id) }"
+                  :aria-label="favorites.includes(item.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+                  @click.stop="toggleFavorite(item.id)"
+                >
+                  <StarFillIcon v-if="favorites.includes(item.id)" size="0.95rem" class="text-amber-400" />
+                  <StarIcon v-else size="0.95rem" class="text-slate-400" />
+                </button>
+              </div>
+            </div>
+
+            <!-- Card Title -->
+            <h3 class="card-title">
+              <span v-html="titleHtml(item.title)" />
+            </h3>
+
+            <!-- Card Summary (2 lines clamp) -->
+            <p class="card-summary">
+              {{ stripHtmlTags(item.summary) || 'Aucun résumé disponible pour cet élément de veille.' }}
+            </p>
+
+            <!-- Card Meta row: Type de veille + Statut + Score -->
+            <div class="card-meta-pills">
+              <span class="type-pill">
+                <i class="pi pi-compass text-xs mr-1 opacity-75"></i>
+                {{ labelFr(item.watchType) }}
+              </span>
+              <StatusBadge :status="item.status" />
+              <span v-if="(item.relevanceScore ?? item.relevance) !== undefined && (item.relevanceScore ?? item.relevance) !== null" class="score-pill">
+                <i class="pi pi-bolt text-emerald-400 text-xs mr-1"></i>
+                {{ Math.round(Number(item.relevanceScore ?? item.relevance) <= 1 && Number(item.relevanceScore ?? item.relevance) > 0 ? Number(item.relevanceScore ?? item.relevance) * 100 : Number(item.relevanceScore ?? item.relevance)) }}%
+              </span>
+            </div>
+
+            <!-- Card Actions Footer -->
+            <div class="card-action-bar" @click.stop>
+              <Button
+                label="Consulter"
+                icon="pi pi-arrow-right"
+                icon-pos="right"
+                size="small"
+                class="executive-btn-primary"
+                @click="openWatchItem(item.id)"
+              />
+              <Button
+                v-if="canQualify && ['NOUVEAU', 'A_QUALIFIER'].includes(item.status)"
+                label="Qualifier"
+                icon="pi pi-check-circle"
+                severity="secondary"
+                size="small"
+                class="executive-btn-secondary"
+                @click="openWatchItem(item.id, true)"
+              />
+              <Button
+                v-if="safeExternalUrl(item.url)"
+                as="a"
+                :href="safeExternalUrl(item.url)"
+                target="_blank"
+                rel="noopener noreferrer"
+                severity="secondary"
+                size="small"
+                icon="pi pi-external-link"
+                class="executive-btn-icon"
+                title="Ouvrir la source externe"
+              />
+            </div>
+          </article>
+
+          <!-- Mobile Pagination -->
+          <div v-if="total > filters.limit" class="mobile-pagination-ctrl">
+            <Button
+              icon="pi pi-chevron-left"
+              label="Précédent"
+              severity="secondary"
+              size="small"
+              :disabled="filters.page <= 1"
+              @click="changePage({ page: filters.page - 2, rows: filters.limit })"
+            />
+            <span class="pagination-info">
+              {{ filters.page }} / {{ Math.ceil(total / filters.limit) }}
+            </span>
+            <Button
+              icon="pi pi-chevron-right"
+              icon-pos="right"
+              label="Suivant"
+              severity="secondary"
+              size="small"
+              :disabled="filters.page >= Math.ceil(total / filters.limit)"
+              @click="changePage({ page: filters.page, rows: filters.limit })"
+            />
+          </div>
+        </div>
 
       </SectionCard>
 
@@ -2666,11 +2872,12 @@ view in
 
 .watch-table :deep(th),
 .watch-table :deep(td) {
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
 }
 
 .watch-table :deep(.p-datatable-column-header-content) {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
 .watch-table :deep(.source-badge),
@@ -2680,16 +2887,294 @@ view in
   white-space: normal;
 }
 
+.mobile-filter-toggle {
+  display: none;
+  margin-bottom: 0.5rem;
+}
+
+/* Mobile Pills Bar */
+.mobile-pills-bar {
+  display: none;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.4rem;
+  margin-bottom: 0.75rem;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.mobile-pills-bar::-webkit-scrollbar {
+  display: none;
+}
+.mobile-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  background: var(--app-surface-2, #13243a);
+  border: 1px solid var(--app-border, rgba(148, 163, 184, 0.15));
+  color: var(--app-text-secondary, #cbd5e1);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.mobile-filter-pill:hover,
+.mobile-filter-pill:active {
+  background: var(--app-surface-3, #192c45);
+  color: #ffffff;
+}
+.mobile-filter-pill.active {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: #10b981;
+  color: #34d399;
+  font-weight: 600;
+}
+.mobile-filter-pill.pill-critical.active {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: #ef4444;
+  color: #f87171;
+}
+.mobile-filter-pill.pill-high.active {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+.mobile-filter-pill.pill-qualify.active {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: #3b82f6;
+  color: #60a5fa;
+}
+.mobile-filter-pill.pill-fav.active {
+  background: rgba(251, 191, 36, 0.18);
+  border-color: #fbbf24;
+  color: #fde047;
+}
+
+/* Executive Card Flow */
+.mobile-card-only {
+  display: none;
+}
+.desktop-table-only {
+  display: block;
+}
+
+.executive-card-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.executive-watch-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(145deg, rgba(15, 29, 48, 0.95), rgba(11, 24, 41, 0.98));
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.executive-watch-card:active {
+  transform: scale(0.99);
+  border-color: rgba(52, 211, 153, 0.4);
+}
+
+.card-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.card-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.source-bubble {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.4rem;
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.card-meta-top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.card-date {
+  font-size: 0.72rem;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.card-fav-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: transform 0.15s ease;
+}
+
+.card-fav-btn:active {
+  transform: scale(1.2);
+}
+
+.card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #f8fafc;
+  margin: 0 0 0.45rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-summary {
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #94a3b8;
+  margin: 0 0 0.75rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-meta-pills {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.85rem;
+}
+
+.type-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  color: #cbd5e1;
+  background: rgba(30, 41, 59, 0.7);
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.score-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #34d399;
+  background: rgba(6, 78, 59, 0.4);
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(52, 211, 153, 0.25);
+}
+
+.card-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.executive-btn-primary {
+  flex: 1;
+  background: #10b981 !important;
+  border-color: #10b981 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border-radius: 0.6rem !important;
+}
+
+.executive-btn-primary:active {
+  background: #059669 !important;
+}
+
+.executive-btn-secondary {
+  border-radius: 0.6rem !important;
+}
+
+.executive-btn-icon {
+  border-radius: 0.6rem !important;
+}
+
+.mobile-pagination-ctrl {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0.25rem 0.25rem 0.25rem;
+}
+
+.pagination-info {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.empty-feed-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.88rem;
+}
+
 @media (max-width: 1500px) {
   .filters-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 768px) {
+  .desktop-table-only {
+    display: none !important;
+  }
+
+  .mobile-card-only {
+    display: flex !important;
+  }
+
+  .mobile-pills-bar {
+    display: flex !important;
+  }
+
   .filters-grid {
-    grid-template-columns:
-      1fr;
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .filters-grid.mobile-filters-hidden {
+    display: none !important;
   }
 }
 </style>

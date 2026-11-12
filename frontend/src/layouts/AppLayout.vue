@@ -103,6 +103,18 @@ const hasFavorites = ref(false);
 const unreadNotifications = ref(0);
 const notificationDrawerOpen = ref(false);
 const pendingActions = ref(0);
+const showBackToTop = ref(false);
+
+function handleScroll() {
+  showBackToTop.value = window.scrollY > 200;
+}
+
+function scrollToTop() {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  });
+}
 
 watch(hasFavorites, () => {
   void restoreSidebarScroll();
@@ -416,6 +428,7 @@ onMounted(() => {
   desktopViewportQuery = window.matchMedia('(min-width: 768px)');
   desktopViewportQuery.addEventListener('change', closeMenuWhenDesktop);
 
+  window.addEventListener('scroll', handleScroll, { passive: true });
   window.addEventListener(
     'favorites-changed',
     updateFavoritesVisibility,
@@ -458,6 +471,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   desktopViewportQuery?.removeEventListener('change', closeMenuWhenDesktop);
 
+  window.removeEventListener('scroll', handleScroll);
   window.removeEventListener(
     'favorites-changed',
     updateFavoritesVisibility,
@@ -801,6 +815,20 @@ onBeforeUnmount(() => {
       <main class="app-main">
         <slot />
       </main>
+
+      <!-- Bouton flottant de retour en haut (Scroll automatique pour téléphone) -->
+      <Transition name="fade-slide">
+        <button
+          v-show="showBackToTop"
+          type="button"
+          class="mobile-scroll-top-btn"
+          aria-label="Retour en haut de page"
+          title="Retour en haut"
+          @click="scrollToTop"
+        >
+          <i class="pi pi-arrow-up" />
+        </button>
+      </Transition>
 
       <NotificationDrawer v-if="notificationDrawerOpen" @close="notificationDrawerOpen = false" />
 
@@ -1366,5 +1394,54 @@ onBeforeUnmount(() => {
   .profile-copy {
     display: none;
   }
+
+  .app-main {
+    padding-bottom: 2rem !important;
+  }
+
+  /* Bouton flottant retour en haut (mobile uniquement) */
+  .mobile-scroll-top-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    right: 1.1rem;
+    bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.45);
+    z-index: 999;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+  }
+
+  .mobile-scroll-top-btn:active {
+    transform: scale(0.9);
+    box-shadow: 0 3px 12px rgba(16, 185, 129, 0.6);
+  }
+
+  .mobile-scroll-top-btn i {
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+}
+
+.mobile-scroll-top-btn {
+  display: none;
+}
+
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(12px) scale(0.85);
 }
 </style>

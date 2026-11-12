@@ -29,6 +29,7 @@ import AppLayout from '../layouts/AppLayout.vue';
 import PageHeader from '../components/ui/PageHeader.vue';
 import SectionCard from '../components/ui/SectionCard.vue';
 import SourceTypeBadge from '../components/ui/SourceTypeBadge.vue';
+import { useTableUrlPagination } from '../composables/useTableUrlPagination';
 
 import {
     labelFr,
@@ -80,6 +81,8 @@ const auth =
 
 const toast =
     useToast();
+
+const { firstRow, rowsPerPage, onPageChange } = useTableUrlPagination('page', 10, 'limit');
 
 
 const health =
@@ -967,7 +970,8 @@ onMounted(
 
                 <DataTable :value="filteredRows
                     " :loading="loading
-                        " data-key="id" sort-mode="single" paginator :rows="10" :rows-per-page-options="[10, 20, 50]">
+                        " data-key="id" sort-mode="single" paginator :first="firstRow" :rows="rowsPerPage" :rows-per-page-options="[10, 20, 50]"
+                        @page="onPageChange">
 
                     <template #empty>
                         Aucune source ne correspond à la recherche.

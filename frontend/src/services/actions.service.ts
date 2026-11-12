@@ -14,6 +14,13 @@ export interface FollowUpAction {
   completedAt: string | null;
   status: string;
   createdAt: string;
+  attachmentName?: string | null;
+  attachmentPath?: string | null;
+  attachmentMime?: string | null;
+  attachmentSize?: number | null;
+  effectivenessEvaluation?: string | null;
+  effectivenessComment?: string | null;
+  effectivenessDate?: string | null;
   owner: { id: number; firstName?: string; lastName?: string; email: string };
   watchItem?: { id: number; title: string };
 }
@@ -49,6 +56,7 @@ export async function createAction(
   notifyActionsChanged();
   return response;
 }
+
 export async function updateAction(
   id: number,
   payload: {
@@ -62,11 +70,31 @@ export async function updateAction(
     dueDate?: string | null;
     progressComment?: string;
     result?: string;
+    attachmentName?: string | null;
+    attachmentPath?: string | null;
+    attachmentMime?: string | null;
+    attachmentSize?: number | null;
+    effectivenessEvaluation?: string | null;
+    effectivenessComment?: string | null;
   },
 ) {
   const response = await api.patch(`/actions/${id}`, payload);
   notifyActionsChanged();
   return response;
+}
+
+export async function uploadActionAttachment(id: number, file: File) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await api.post(`/actions/${id}/attachment`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  notifyActionsChanged();
+  return response;
+}
+
+export function getActionAttachmentUrl(id: number) {
+  return `/api/v1/actions/${id}/attachment`;
 }
 
 export async function deleteAction(id: number) {

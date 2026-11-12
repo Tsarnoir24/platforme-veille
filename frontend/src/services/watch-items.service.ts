@@ -30,6 +30,7 @@ export interface WatchItem {
   status: string;
 
   relevance: number | null;
+  relevanceScore?: number | null;
 
   criticality: string | null;
 

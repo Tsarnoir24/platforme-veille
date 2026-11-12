@@ -236,7 +236,7 @@ export class DashboardService {
       this.dataSource.query(`SELECT w.id, w.title, w.status, w.criticality, s.name AS "sourceName"
         FROM watch_items w JOIN sources s ON s.id = w.source_id
         WHERE w.criticality IN ('CRITIQUE', 'ELEVEE') ${publishedWhereAliasClause} ORDER BY w.updated_at DESC LIMIT 5`),
-      this.dataSource.query(`SELECT a.id, a.title, a.status, a.due_date AS "dueDate", w.title AS "watchItemTitle"
+      this.dataSource.query(`SELECT a.id, a.title, a.status, a.due_date AS "dueDate", a.watch_item_id AS "watchItemId", w.title AS "watchItemTitle"
         FROM actions a JOIN watch_items w ON w.id = a.watch_item_id
         WHERE a.status IN ('OPEN', 'IN_PROGRESS') ${isReferent ? 'AND a.owner_id = $1' : ''}
         ORDER BY a.due_date ASC NULLS LAST, a.created_at DESC LIMIT 5`, actionParameters),

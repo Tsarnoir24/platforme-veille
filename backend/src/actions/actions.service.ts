@@ -90,6 +90,22 @@ export class ActionsService {
       order: { createdAt: 'DESC' },
     });
   }
+
+  async findOne(id: number, currentUser: { id: number; roles: string[] }) {
+    const action = await this.actionRepository.findOne({
+      where: { id },
+      relations: { watchItem: true, owner: true },
+    });
+    if (!action) throw new NotFoundException('Action introuvable');
+    const canSeeAll =
+      currentUser.roles.includes('ADMIN') ||
+      currentUser.roles.includes('RESPONSABLE_VEILLE') ||
+      currentUser.roles.includes('LECTEUR');
+    if (!canSeeAll && action.owner.id !== currentUser.id) {
+      throw new ForbiddenException('Accès refusé à cette action');
+    }
+    return action;
+  }
   findByItem(itemId: number, currentUser: { id: number; roles: string[] }) {
     const canSeeAll =
       currentUser.roles.includes('ADMIN') ||
@@ -147,6 +163,17 @@ export class ActionsService {
     if (dto.dueDate !== undefined) action.dueDate = dto.dueDate;
     if (dto.progressComment !== undefined) action.progressComment = dto.progressComment.trim() || null;
     if (dto.result !== undefined) action.result = dto.result.trim() || null;
+    if (dto.attachmentName !== undefined) action.attachmentName = dto.attachmentName;
+    if (dto.attachmentPath !== undefined) action.attachmentPath = dto.attachmentPath;
+    if (dto.attachmentMime !== undefined) action.attachmentMime = dto.attachmentMime;
+    if (dto.attachmentSize !== undefined) action.attachmentSize = dto.attachmentSize;
+    if (dto.effectivenessEvaluation !== undefined) {
+      action.effectivenessEvaluation = dto.effectivenessEvaluation;
+      action.effectivenessDate = dto.effectivenessEvaluation ? new Date() : null;
+    }
+    if (dto.effectivenessComment !== undefined) {
+      action.effectivenessComment = dto.effectivenessComment?.trim() || null;
+    }
     const saved = await this.actionRepository.save(action);
     if (dto.status === 'IN_PROGRESS') {
       const admins = await this.userRepository.find({ relations: { roles: true } });
