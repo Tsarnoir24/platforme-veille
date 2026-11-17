@@ -654,9 +654,10 @@ onMounted(load);
                     Action : <strong>{{ evalAction.title }}</strong><br />
                     Veille source : <em>{{ stripHtmlTags(evalAction.watchItem?.title) }}</em>
                 </p>
-                <div class="form-group">
+                <div class="form-group select-host">
                     <label>Niveau d'efficacité</label>
                     <Select
+                        append-to="self"
                         v-model="evalRating"
                         :options="effectivenessOptions"
                         option-label="label"

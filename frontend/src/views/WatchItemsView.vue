@@ -1940,7 +1940,7 @@ view in
       <SectionCard :title="`${total} élément${total > 1 ? 's' : ''}`
         " subtitle="Informations collectées et disponibles dans la plateforme." icon="pi pi-list">
 
-        <DataTable class="watch-table desktop-table-only" table-style="min-width: 65rem" :value="items
+        <DataTable class="watch-table desktop-table-only" scrollable table-style="min-width: 65rem" :value="items
           " :loading="loading
             " data-key="id" lazy paginator :first="(
               filters.page - 1
@@ -2970,18 +2970,23 @@ view in
   position: relative;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(145deg, rgba(15, 29, 48, 0.95), rgba(11, 24, 41, 0.98));
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border-strong);
   border-radius: 1rem;
   padding: 1rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--app-shadow-soft);
   cursor: pointer;
   transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+.executive-watch-card:hover {
+  box-shadow: var(--app-shadow);
+  border-color: var(--app-primary);
+}
+
 .executive-watch-card:active {
   transform: scale(0.99);
-  border-color: rgba(52, 211, 153, 0.4);
+  border-color: var(--app-primary);
 }
 
 .card-header-bar {
@@ -3002,11 +3007,11 @@ view in
 
 .source-bubble {
   font-size: 0.72rem;
-  color: #94a3b8;
-  background: rgba(15, 23, 42, 0.6);
+  color: var(--app-text-secondary);
+  background: var(--app-surface-2);
   padding: 0.2rem 0.5rem;
   border-radius: 0.4rem;
-  border: 1px solid rgba(148, 163, 184, 0.1);
+  border: 1px solid var(--app-border);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3022,7 +3027,7 @@ view in
 
 .card-date {
   font-size: 0.72rem;
-  color: #64748b;
+  color: var(--app-text-muted);
   white-space: nowrap;
 }
 
@@ -3046,7 +3051,7 @@ view in
   font-size: 1rem;
   font-weight: 600;
   line-height: 1.4;
-  color: #f8fafc;
+  color: var(--app-text);
   margin: 0 0 0.45rem 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -3057,7 +3062,7 @@ view in
 .card-summary {
   font-size: 0.8rem;
   line-height: 1.45;
-  color: #94a3b8;
+  color: var(--app-text-muted);
   margin: 0 0 0.75rem 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -3077,11 +3082,11 @@ view in
   display: inline-flex;
   align-items: center;
   font-size: 0.72rem;
-  color: #cbd5e1;
-  background: rgba(30, 41, 59, 0.7);
+  color: var(--app-text-secondary);
+  background: var(--app-surface-2);
   padding: 0.2rem 0.55rem;
   border-radius: 9999px;
-  border: 1px solid rgba(148, 163, 184, 0.12);
+  border: 1px solid var(--app-border);
 }
 
 .score-pill {
@@ -3101,7 +3106,7 @@ view in
   align-items: center;
   gap: 0.5rem;
   padding-top: 0.65rem;
-  border-top: 1px solid rgba(148, 163, 184, 0.08);
+  border-top: 1px solid var(--app-border);
 }
 
 .executive-btn-primary {
@@ -3155,7 +3160,7 @@ view in
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 860px) {
   .desktop-table-only {
     display: none !important;
   }

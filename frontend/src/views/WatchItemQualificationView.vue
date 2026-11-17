@@ -910,9 +910,9 @@ onMounted(
                                     <p class="ai-disclaimer">Les libellés sont des suggestions générées à partir du
                                         contenu, sans envoi du catalogue interne. Corrigez-les si nécessaire, puis
                                         rapprochez-les des choix de taxonomie plus bas.</p>
-                                    <div class="ai-field">
+                                    <div class="ai-field select-host">
                                         <label for="ai-watch-type">Catégorie de veille proposée</label>
-                                        <Select id="ai-watch-type" v-model="aiDraft.classificationWatchType"
+                                        <Select id="ai-watch-type" append-to="self" v-model="aiDraft.classificationWatchType"
                                             :options="categoryDropdownOptions" option-label="label"
                                             option-value="value" class="w-full" />
                                     </div>

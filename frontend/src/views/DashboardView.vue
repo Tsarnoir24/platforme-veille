@@ -523,8 +523,9 @@ onBeforeUnmount(() => {
           <div class="dashboard-header-actions">
             <Tag :value="dashboardRole" severity="secondary" class="dashboard-role-badge" />
 
-            <div class="period-select-wrap">
+            <div class="period-select-wrap select-host">
               <Select
+                append-to="self"
                 v-model="period"
                 :options="periods"
                 option-label="label"
@@ -804,6 +805,11 @@ source,
 
 .period-select-wrap {
   min-width: 12rem;
+  position: relative;
+}
+
+.period-select-wrap.select-host {
+  width: auto;
 }
 
 .kpi-wrapper {

@@ -75,8 +75,9 @@
   --tw-shadow-card-hover: var(--app-shadow);
 }
 
-html.theme-light {
-  color-scheme: light;
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
     --app-bg: #f3f7fb;
     --app-bg-soft: #edf3f8;
     --app-surface: #ffffff;
@@ -123,6 +124,57 @@ html.theme-light {
     --app-banner-warn-bg: #fffbeb;
     --app-banner-warn-title: #92400e;
     --app-banner-warn-text: #78350f;
+  }
+}
+
+html.theme-light {
+  color-scheme: light;
+  --app-bg: #f3f7fb;
+  --app-bg-soft: #edf3f8;
+  --app-surface: #ffffff;
+  --app-surface-2: #f0f5fa;
+  --app-surface-3: #e3edf5;
+  --app-border: rgb(30 58 83 / 0.13);
+  --app-border-strong: rgb(30 58 83 / 0.23);
+  --app-text: #10243b;
+  --app-text-primary: var(--app-text);
+  --app-text-secondary: #40566e;
+  --app-text-muted: #60758d;
+  --text-color-secondary: var(--app-text-secondary);
+  --app-primary: #047857;
+  --app-primary-hover: #065f46;
+  --app-primary-dark: #ffffff;
+  --app-blue: #1d4ed8;
+  --app-warning: #a16207;
+  --app-danger: #b91c1c;
+  --app-shadow: 0 18px 45px rgb(26 52 77 / 0.12);
+  --app-shadow-soft: 0 8px 24px rgb(26 52 77 / 0.06);
+  --app-card-end: #f8fbfe;
+  --app-input-bg: #ffffff;
+  --app-dropdown-hover: #e8f3ef;
+  --app-dropdown-selected: #d9f3e7;
+  --app-dropdown-selected-text: #065f46;
+  --app-placeholder: #687d93;
+  --app-table-head: #eaf1f7;
+  --app-sidebar-start: #ffffff;
+  --app-sidebar-end: #f2f7fb;
+  --app-topbar: rgb(255 255 255 / 0.92);
+  --app-segmented-bg: #e2ecf5;
+  --app-segmented-btn-text: #334e68;
+  --app-segmented-btn-active-bg: #047857;
+  --app-segmented-btn-active-text: #ffffff;
+  --app-banner-success-border: rgb(4 120 87 / 0.35);
+  --app-banner-success-bg: #ecfdf5;
+  --app-banner-success-title: #047857;
+  --app-banner-success-text: #065f46;
+  --app-avatar-bg-start: #d1fae5;
+  --app-avatar-bg-end: #ccfbf1;
+  --app-avatar-text: #047857;
+  --app-avatar-border: rgb(4 120 87 / 0.25);
+  --app-banner-warn-border: #fcd34d;
+  --app-banner-warn-bg: #fffbeb;
+  --app-banner-warn-title: #92400e;
+  --app-banner-warn-text: #78350f;
 }
 
 html,

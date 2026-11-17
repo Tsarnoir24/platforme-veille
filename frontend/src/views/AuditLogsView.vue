@@ -1772,7 +1772,8 @@ group in
         subtitle="Toutes les actions importantes réalisées dans l’application." icon="pi pi-list">
 
         <DataTable :key="activeGroup" :value="logs" :loading="loading" paginator lazy :first="firstRow" :rows="pageSize"
-          :total-records="totalLogs" :rows-per-page-options="[10, 20, 50]" size="small" @page="changePage">
+          :total-records="totalLogs" :rows-per-page-options="[10, 20, 50]" size="small" scrollable
+          table-style="min-width: 55rem" @page="changePage">
 
           <template #empty>
             Aucune opération enregistrée dans cette partie.

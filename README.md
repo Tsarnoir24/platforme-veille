@@ -216,7 +216,7 @@ Node.js 20 ou plus récent est recommandé pour les versions de NestJS/Vite util
 Le dépôt est public : sa consultation et son clonage ne nécessitent pas d’autorisation préalable. Pour envoyer des modifications, authentifiez votre compte GitHub et vérifiez que vous disposez des droits de contribution.
 
 ```bash
-git clone https://github.com/koffiP24/platforme-veille.git
+git clone https://github.com/Tsarnoir24/platforme-veille.git
 cd plateforme-veille
 ```
 
@@ -1198,7 +1198,7 @@ git reset --hard origin/main
 Sur un poste déjà équipé de Git, Node et PostgreSQL :
 
 ```bash
-git clone https://github.com/koffiP24/platforme-veille.git
+git clone https://github.com/Tsarnoir24/platforme-veille.git
 cd plateforme-veille
 
 cd backend
