@@ -511,7 +511,7 @@ onMounted(
             <div class="select-host">
               <Select append-to="self" v-model="form.subscriptionType
                 " :options="subscriptionTypeOptions
-                " option-label="label" option-value="value" placeholder="Sélectionner un type" class="w-full" />
+                  " option-label="label" option-value="value" placeholder="Sélectionner un type" class="w-full" />
             </div>
 
           </div>
@@ -526,7 +526,7 @@ onMounted(
             <div class="select-host">
               <Select append-to="self" v-model="form.targetId
                 " :options="targetOptions
-                " option-label="label" option-value="id" :placeholder="targetPlaceholder
+                  " option-label="label" option-value="id" :placeholder="targetPlaceholder
                   " filter class="w-full" />
             </div>
 
@@ -542,7 +542,7 @@ onMounted(
             <div class="select-host">
               <Select append-to="self" v-model="form.channel
                 " :options="channelOptions
-                " option-label="label" option-value="value" option-disabled="disabled"
+                  " option-label="label" option-value="value" option-disabled="disabled"
                 placeholder="Sélectionner un mode" class="w-full" />
             </div>
 

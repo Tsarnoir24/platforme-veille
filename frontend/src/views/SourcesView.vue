@@ -1026,25 +1026,6 @@ onMounted(() => {
 
             <Dialog v-if="canCreateSource" v-model:visible="dialogVisible" modal header="Nouvelle source" class="watch-source-dialog w-full max-w-2xl" :closable="!submitting" :close-on-escape="!submitting">
                 <form class="space-y-4" @submit.prevent="submit">
-                    <div class="source-mode-segmented" role="tablist" aria-label="Mode d'ajout de source">
-                        <button
-                            type="button"
-                            class="source-mode-btn"
-                            :class="{ active: creationMode === 'DIRECT' }"
-                            @click="switchCreationMode('DIRECT')"
-                        >
-                            Flux RSS / Atom, API et Import manuel
-                        </button>
-                        <button
-                            type="button"
-                            class="source-mode-btn"
-                            :class="{ active: creationMode === 'WEB_PAGE' }"
-                            @click="switchCreationMode('WEB_PAGE')"
-                        >
-                            Lien de page web (auto-détection HTML)
-                        </button>
-                    </div>
-
                     <Message v-if="error" severity="error">
                         {{ error }}
                     </Message>

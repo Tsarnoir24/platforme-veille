@@ -2353,17 +2353,6 @@ view in
         " modal header="Nouvelle source" class="watch-source-dialog w-full max-w-2xl">
 
         <form id="watch-source-form" class="space-y-4" @submit.prevent="submitSource">
-          <div class="source-mode-segmented" role="tablist" aria-label="Mode d'ajout de source">
-            <button type="button" class="source-mode-btn" :class="{ active: sourceCreationMode === 'DIRECT' }"
-              @click="switchSourceCreationMode('DIRECT')">
-              Flux RSS / Atom, API et Import manuel
-            </button>
-            <button type="button" class="source-mode-btn" :class="{ active: sourceCreationMode === 'WEB_PAGE' }"
-              @click="switchSourceCreationMode('WEB_PAGE')">
-              Lien de page web (auto-détection HTML)
-            </button>
-          </div>
-
           <Message v-if="sourceError" severity="error">
             {{ sourceError }}
           </Message>
@@ -2953,7 +2942,7 @@ view in
 }
 
 /* Executive Card Flow */
-.mobile-card-only {
+.executive-card-flow.mobile-card-only {
   display: none;
 }
 .desktop-table-only {

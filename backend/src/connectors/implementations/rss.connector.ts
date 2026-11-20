@@ -3,7 +3,6 @@ import {
   BadRequestException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import * as cheerio from 'cheerio';
 import Parser from 'rss-parser';
 
 import {
@@ -53,7 +52,7 @@ export class RssConnector implements BaseConnector {
         if (!response.ok) {
           if (response.status === 402 && url.hostname.toLowerCase() === 'rss.app') {
             throw new BadGatewayException(
-              'RSS.app refuse actuellement l’accès à ce flux (HTTP 402). Vérifiez l’état du flux et du compte RSS.app.',
+              'RSS.app refuse actuellement lâ€™accÃ¨s Ã  ce flux (HTTP 402). VÃ©rifiez lâ€™Ã©tat du flux et du compte RSS.app.',
             );
           }
           const retryable =
@@ -68,7 +67,7 @@ export class RssConnector implements BaseConnector {
           }
 
           throw new BadGatewayException(
-            `Le serveur du flux a renvoyé une erreur HTTP ${response.status}.`,
+            `Le serveur du flux a renvoyÃ© une erreur HTTP ${response.status}.`,
           );
         }
 
@@ -78,7 +77,6 @@ export class RssConnector implements BaseConnector {
         const format = this.detectFormat(content, url, contentType);
         if (format === 'JSON') return this.parseJson(content);
         if (format === 'CSV') return this.parseCsv(content);
-        if (format === 'HTML') return this.parseHtml(content, url);
 
         const feed = await this.parser.parseString(content);
         return feed.items.map((item) => ({
@@ -103,7 +101,7 @@ export class RssConnector implements BaseConnector {
         }
 
         throw new ServiceUnavailableException(
-          'Le flux est temporairement inaccessible. Vérifiez son adresse puis réessayez.',
+          'Le flux est temporairement inaccessible. VÃ©rifiez son adresse puis rÃ©essayez.',
         );
       }
     }
@@ -113,25 +111,17 @@ export class RssConnector implements BaseConnector {
     );
   }
 
-  private detectFormat(content: string, url: URL, contentType?: string): 'XML' | 'JSON' | 'CSV' | 'HTML' {
+  private detectFormat(content: string, url: URL, contentType?: string): 'XML' | 'JSON' | 'CSV' {
     const mediaType = contentType?.toLowerCase() ?? '';
     const trimmed = content.replace(/^\uFEFF/, '').trimStart();
 
     if (mediaType.includes('json')) return 'JSON';
     if (mediaType.includes('csv')) return 'CSV';
-    if (
-      mediaType.includes('html') ||
-      /^<!doctype\s+html/i.test(trimmed) ||
-      /^<html[\s>]/i.test(trimmed)
-    ) {
-      return 'HTML';
-    }
     if (mediaType.includes('xml') || mediaType.includes('rss') || mediaType.includes('atom')) return 'XML';
 
     const extension = url.pathname.toLowerCase();
     if (extension.endsWith('.json')) return 'JSON';
     if (extension.endsWith('.csv')) return 'CSV';
-    if (extension.endsWith('.html') || extension.endsWith('.htm')) return 'HTML';
     if (extension.endsWith('.xml') || extension.endsWith('.rss') || extension.endsWith('.atom')) return 'XML';
 
     if (trimmed.startsWith('{') || trimmed.startsWith('[')) return 'JSON';
@@ -144,153 +134,7 @@ export class RssConnector implements BaseConnector {
     ) return 'CSV';
 
     throw new BadRequestException(
-      'Le format du flux n’a pas pu être reconnu. Formats acceptés : XML, JSON, CSV et HTML.',
-    );
-  }
-
-  private parseHtml(content: string, baseUrl: URL): ExternalItem[] {
-    const $ = cheerio.load(content);
-    const items: ExternalItem[] = [];
-    const seenUrls = new Set<string>();
-
-    // 1. Extraction JSON-LD (Schema.org NewsArticle / Article / ScholarlyArticle / ItemList)
-    $('script[type="application/ld+json"]').each((_, el) => {
-      try {
-        const raw = $(el).contents().text().trim();
-        if (!raw) return;
-        const parsed = JSON.parse(raw);
-        const candidates = Array.isArray(parsed)
-          ? parsed
-          : Array.isArray(parsed?.['@graph'])
-            ? parsed['@graph']
-            : Array.isArray(parsed?.itemListElement)
-              ? parsed.itemListElement.map((e: Record<string, unknown>) => e.item ?? e)
-              : [parsed];
-        for (const entry of candidates) {
-          if (!entry || typeof entry !== 'object') continue;
-          const obj = entry as Record<string, unknown>;
-          const headline = this.stripHtml(
-            typeof obj.headline === 'string'
-              ? obj.headline
-              : typeof obj.name === 'string'
-                ? obj.name
-                : undefined,
-          );
-          if (!headline || headline.length < 5) continue;
-          const rawUrl =
-            typeof obj.url === 'string'
-              ? obj.url
-              : typeof (obj.mainEntityOfPage as Record<string, unknown>)?.['@id'] === 'string'
-                ? ((obj.mainEntityOfPage as Record<string, unknown>)['@id'] as string)
-                : baseUrl.href;
-          let fullUrl = baseUrl.href;
-          try {
-            fullUrl = new URL(rawUrl, baseUrl.href).toString();
-          } catch {
-            fullUrl = baseUrl.href;
-          }
-          if (seenUrls.has(fullUrl)) continue;
-          seenUrls.add(fullUrl);
-          items.push({
-            externalId: fullUrl,
-            title: headline,
-            summary:
-              this.stripHtml(
-                typeof obj.description === 'string'
-                  ? obj.description
-                  : typeof obj.abstract === 'string'
-                    ? obj.abstract
-                    : undefined,
-              ) ?? '',
-            url: fullUrl,
-            publishedAt: this.parseDate(
-              typeof obj.datePublished === 'string'
-                ? obj.datePublished
-                : typeof obj.dateModified === 'string'
-                  ? obj.dateModified
-                  : undefined,
-            ),
-            raw: obj,
-          });
-        }
-      } catch {
-        // Ignore malformed JSON-LD blocks
-      }
-    });
-
-    // 2. Extraction des blocs <article> ou titres de listes d'articles dans le DOM
-    $('article, .views-row, .news-item, .post, .publication-item').each((_, el) => {
-      const container = $(el);
-      const headingLink = container.find('h1 a, h2 a, h3 a, h4 a, a[href]').first();
-      const rawTitle =
-        container.find('h1, h2, h3, h4').first().text() || headingLink.text();
-      const title = this.stripHtml(rawTitle);
-      const href = headingLink.attr('href');
-      if (!title || title.length < 8 || !href) return;
-
-      let fullUrl: string;
-      try {
-        fullUrl = new URL(href, baseUrl.href).toString();
-      } catch {
-        return;
-      }
-      if (!['http:', 'https:'].includes(new URL(fullUrl).protocol)) return;
-      if (seenUrls.has(fullUrl)) return;
-      seenUrls.add(fullUrl);
-
-      const summary =
-        this.stripHtml(container.find('p, .summary, .teaser, .excerpt').first().text()) ?? '';
-      const timeAttr =
-        container.find('time').first().attr('datetime') ||
-        container.find('time').first().text();
-
-      items.push({
-        externalId: fullUrl,
-        title,
-        summary,
-        url: fullUrl,
-        publishedAt: this.parseDate(timeAttr),
-        raw: { source: 'cheerio-article', url: fullUrl },
-      });
-    });
-
-    if (items.length > 0) {
-      return items.slice(0, 30);
-    }
-
-    // 3. Fallback : extraction unitaire OpenGraph / Meta de la page courante
-    const ogTitle =
-      $('meta[property="og:title"]').attr('content') ||
-      $('meta[name="twitter:title"]').attr('content') ||
-      $('title').first().text() ||
-      $('h1').first().text();
-    const ogDescription =
-      $('meta[property="og:description"]').attr('content') ||
-      $('meta[name="description"]').attr('content') ||
-      $('meta[name="twitter:description"]').attr('content') ||
-      $('main p, article p, p').first().text();
-    const ogPublished =
-      $('meta[property="article:published_time"]').attr('content') ||
-      $('meta[name="publication_date"]').attr('content') ||
-      $('meta[name="dc.date"]').attr('content') ||
-      $('time[datetime]').first().attr('datetime');
-
-    const cleanTitle = this.stripHtml(ogTitle);
-    if (cleanTitle) {
-      return [
-        {
-          externalId: baseUrl.href,
-          title: cleanTitle,
-          summary: this.stripHtml(ogDescription) ?? '',
-          url: baseUrl.href,
-          publishedAt: this.parseDate(ogPublished),
-          raw: { source: 'cheerio-meta', url: baseUrl.href },
-        },
-      ];
-    }
-
-    throw new BadRequestException(
-      "Aucun article ou métadonnée exploitable n'a pu être extrait de cette page HTML.",
+      'Le format du flux nâ€™a pas pu Ãªtre reconnu. Formats acceptÃ©s : XML, JSON et CSV.',
     );
   }
 
@@ -299,13 +143,13 @@ export class RssConnector implements BaseConnector {
     try {
       document = JSON.parse(content);
     } catch {
-      throw new BadRequestException("La réponse n'est pas un flux JSON valide.");
+      throw new BadRequestException("La rÃ©ponse n'est pas un flux JSON valide.");
     }
     if (Array.isArray(document)) return this.mapJsonItems(document);
     const candidates = this.findJsonItems(document);
     if (!candidates) {
       throw new BadRequestException(
-        'La réponse JSON doit contenir une liste d’articles (par exemple « items », « results », « data » ou « hydra:member »).',
+        'La rÃ©ponse JSON doit contenir une liste dâ€™articles (par exemple Â« items Â», Â« results Â», Â« data Â» ou Â« hydra:member Â»).',
       );
     }
     return this.mapJsonItems(candidates);
@@ -374,7 +218,7 @@ export class RssConnector implements BaseConnector {
     const headers = rows[0].map((header) => this.normalizeHeader(header));
     const titleIndex = headers.findIndex((header) => ['title', 'titre', 'name', 'headline'].includes(header));
     if (titleIndex < 0) {
-      throw new BadRequestException('Le flux CSV doit contenir une colonne « title » ou « titre ».');
+      throw new BadRequestException('Le flux CSV doit contenir une colonne Â« title Â» ou Â« titre Â».');
     }
     return rows.slice(1).filter((row) => row.some((cell) => cell.trim())).map((row) => {
       const item = Object.fromEntries(headers.map((header, index) => [header, row[index] ?? '']));
@@ -482,7 +326,7 @@ export class RssConnector implements BaseConnector {
 
       return {
         success: true,
-        message: 'Le flux est accessible et son format a été reconnu.',
+        message: 'Le flux est accessible et son format a Ã©tÃ© reconnu.',
       };
     } catch (error) {
       return {

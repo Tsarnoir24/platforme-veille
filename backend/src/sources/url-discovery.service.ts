@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import * as cheerio from 'cheerio';
 import { safeGet } from '../connectors/utils/safe-http-client';
 import { stripHtmlTags } from '../common/utils/strip-html';
 
@@ -23,7 +22,7 @@ export class UrlDiscoveryService {
   async resolveSourceUrl(inputUrl: string): Promise<DiscoveredSource> {
     const cleanUrl = inputUrl.trim();
     if (!cleanUrl) {
-      throw new BadRequestException("Veuillez saisir l'adresse de la page web à analyser.");
+      throw new BadRequestException("Veuillez saisir l'adresse de la page web Ã  analyser.");
     }
 
     let parsedUrl: URL;
@@ -40,7 +39,7 @@ export class UrlDiscoveryService {
     const host = parsedUrl.hostname.toLowerCase();
     const knownMeta = this.detectDomainMetadata(host);
 
-    // 1. Règles rapides par domaine connu (Pattern Matching : ISO.org, etc.)
+    // 1. RÃ¨gles rapides par domaine connu (Pattern Matching : ISO.org, etc.)
     const isoStandardMatch = cleanUrl.match(/iso\.org\/(?:[a-z]{2}\/)?standard\/(\d+)\.html/i);
     if (isoStandardMatch) {
       const rawId = isoStandardMatch[1];
@@ -60,7 +59,7 @@ export class UrlDiscoveryService {
         suggestedCountry: 'International',
         suggestedCategory: 'NORMATIF',
         suggestedFrequency: '6h',
-        message: 'Flux officiel ISO détecté et converti automatiquement.',
+        message: 'Flux officiel ISO dÃ©tectÃ© et converti automatiquement.',
       };
     }
 
@@ -78,12 +77,12 @@ export class UrlDiscoveryService {
         resolvedUrl,
         detectedType: 'RSS',
         resolutionMethod: 'PATTERN_MATCH',
-        suggestedTitle: pageMeta.title || `Comité technique ISO ${rawId}`,
+        suggestedTitle: pageMeta.title || `ComitÃ© technique ISO ${rawId}`,
         suggestedOrganization: 'ISO',
         suggestedCountry: 'International',
         suggestedCategory: 'NORMATIF',
         suggestedFrequency: '6h',
-        message: 'Flux officiel du comité ISO détecté et converti automatiquement.',
+        message: 'Flux officiel du comitÃ© ISO dÃ©tectÃ© et converti automatiquement.',
       };
     }
 
@@ -93,16 +92,16 @@ export class UrlDiscoveryService {
         resolvedUrl: 'https://www.iso.org/contents/shared/rss/latest-standards.rss',
         detectedType: 'RSS',
         resolutionMethod: 'PATTERN_MATCH',
-        suggestedTitle: 'ISO - Dernières normes publiées',
+        suggestedTitle: 'ISO - DerniÃ¨res normes publiÃ©es',
         suggestedOrganization: 'ISO',
         suggestedCountry: 'International',
         suggestedCategory: 'NORMATIF',
         suggestedFrequency: '6h',
-        message: 'Flux général des normes ISO détecté et converti automatiquement.',
+        message: 'Flux gÃ©nÃ©ral des normes ISO dÃ©tectÃ© et converti automatiquement.',
       };
     }
 
-    // 2. Inspection HTTP sécurisée (safeGet anti-SSRF)
+    // 2. Inspection HTTP sÃ©curisÃ©e (safeGet anti-SSRF)
     let response;
     try {
       response = await safeGet(parsedUrl.toString(), {
@@ -122,7 +121,7 @@ export class UrlDiscoveryService {
         resolutionMethod: 'HTML_EXTRACTION',
         ...knownMeta,
         suggestedFrequency: '6h',
-        message: 'Lien enregistré (lecture directe lors de la collecte).',
+        message: 'Lien enregistrÃ© (lecture directe lors de la collecte).',
       };
     }
 
@@ -144,7 +143,7 @@ export class UrlDiscoveryService {
         resolutionMethod: 'DIRECT_FEED',
         ...knownMeta,
         suggestedFrequency: '6h',
-        message: 'Flux JSON / API direct détecté.',
+        message: 'Flux JSON / API direct dÃ©tectÃ©.',
       };
     }
 
@@ -155,8 +154,7 @@ export class UrlDiscoveryService {
       /^<\?xml|<rss|<feed/i.test(trimmed)
     ) {
       const isAtom = contentType.includes('atom') || /<feed[\s>]/i.test(trimmed);
-      const $xml = cheerio.load(body, { xmlMode: true });
-      const xmlTitle = stripHtmlTags($xml('channel > title, feed > title').first().text());
+      const xmlTitle = stripHtmlTags(body.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? '');
       return {
         originalUrl: cleanUrl,
         resolvedUrl: cleanUrl,
@@ -169,82 +167,7 @@ export class UrlDiscoveryService {
       };
     }
 
-    // 3. Auto-découverte dans le DOM HTML avec Cheerio
-    const $ = cheerio.load(body);
-    const rawPageTitle =
-      $('meta[property="og:title"]').attr('content') ||
-      $('meta[name="twitter:title"]').attr('content') ||
-      $('title').first().text() ||
-      $('h1').first().text() ||
-      '';
-    const pageTitle = stripHtmlTags(rawPageTitle);
-    const siteName = stripHtmlTags($('meta[property="og:site_name"]').attr('content') || '');
-
-    const alternateAtom = $('link[rel="alternate"][type*="atom" i]').first().attr('href');
-    const alternateRss =
-      $('link[rel="alternate"][type*="rss" i]').first().attr('href') ||
-      $('link[rel="alternate"][type*="xml" i]').first().attr('href');
-    const anchorFeed = $(
-      'a[href$=".rss"], a[href$=".xml"], a[href*="/rss"], a[href*="/feed"], a[href*="format=rss"]',
-    )
-      .first()
-      .attr('href');
-
-    const discoveredHref = alternateAtom || alternateRss || anchorFeed;
-    if (discoveredHref) {
-      try {
-        const absoluteFeedUrl = new URL(discoveredHref, cleanUrl).toString();
-        const isAtom = Boolean(alternateAtom) || /atom/i.test(discoveredHref);
-        return {
-          originalUrl: cleanUrl,
-          resolvedUrl: absoluteFeedUrl,
-          detectedType: isAtom ? 'ATOM' : 'RSS',
-          resolutionMethod: 'DOM_AUTODISCOVERY',
-          suggestedTitle: pageTitle || knownMeta.suggestedTitle,
-          suggestedOrganization: siteName || knownMeta.suggestedOrganization,
-          suggestedCountry: knownMeta.suggestedCountry,
-          suggestedCategory: knownMeta.suggestedCategory,
-          suggestedFrequency: '6h',
-          message: 'Flux officiel détecté dans la page HTML et converti automatiquement.',
-        };
-      } catch {
-        // Ignore invalid relative feed href and fallback to HTML extraction
-      }
-    }
-
-    // 4. Fallback : extraction directe des métadonnées et articles HTML via Cheerio
-    return {
-      originalUrl: cleanUrl,
-      resolvedUrl: cleanUrl,
-      detectedType: 'RSS',
-      resolutionMethod: 'HTML_EXTRACTION',
-      suggestedTitle: pageTitle || knownMeta.suggestedTitle || parsedUrl.hostname,
-      suggestedOrganization: siteName || knownMeta.suggestedOrganization,
-      suggestedCountry: knownMeta.suggestedCountry,
-      suggestedCategory: knownMeta.suggestedCategory,
-      suggestedFrequency: '6h',
-      message:
-        'Aucun flux RSS externe requis : la page HTML et ses articles seront extraits directement via Cheerio.',
-    };
-  }
-
-  private async fetchPageTitleSafely(url: string): Promise<{ title?: string }> {
-    try {
-      const response = await safeGet(url, {
-        headers: { 'User-Agent': 'VeilleISO17025/1.0' },
-        timeoutMs: 6000,
-      });
-      if (!response.ok) return {};
-      const html = await response.text();
-      const $ = cheerio.load(html);
-      const raw =
-        $('meta[property="og:title"]').attr('content') ||
-        $('title').first().text() ||
-        $('h1').first().text();
-      return { title: stripHtmlTags(raw) || undefined };
-    } catch {
-      return {};
-    }
+    throw new BadRequestException("Cette URL ne pointe pas vers un flux RSS ou Atom valide.");
   }
 
   private detectDomainMetadata(host: string): {
@@ -270,7 +193,7 @@ export class UrlDiscoveryService {
     if (host.includes('efsa.europa.eu')) {
       return {
         suggestedOrganization: 'EFSA',
-        suggestedCountry: 'Union européenne',
+        suggestedCountry: 'Union europÃ©enne',
         suggestedCategory: 'REGLEMENTAIRE',
       };
     }

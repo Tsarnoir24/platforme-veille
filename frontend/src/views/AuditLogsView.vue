@@ -1773,7 +1773,7 @@ group in
 
         <DataTable :key="activeGroup" :value="logs" :loading="loading" paginator lazy :first="firstRow" :rows="pageSize"
           :total-records="totalLogs" :rows-per-page-options="[10, 20, 50]" size="small" scrollable
-          table-style="min-width: 55rem" @page="changePage">
+          table-style="width: 100%; min-width: 55rem" @page="changePage">
 
           <template #empty>
             Aucune opération enregistrée dans cette partie.
